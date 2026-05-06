@@ -6,6 +6,7 @@ import { getAccessToken } from "../auth";
 import { api, uploadMediaFile } from "../lib/api";
 import {
   connectFeedStream,
+  type FeedPage,
   fetchFederatedIncomingFeedItem,
   fetchFederatedThreadReplies,
   fetchFeedItem,
@@ -52,6 +53,7 @@ import {
 } from "../lib/timelineSettings";
 
 const MAX_IMAGES = MAX_COMPOSER_IMAGE_SLOTS;
+const FEED_PAGE_LIMIT = 20;
 
 type ReplyingTo = { id: string; user_email: string; user_handle: string; is_federated?: boolean; remote_object_url?: string };
 
@@ -139,6 +141,10 @@ const items = ref<TimelinePost[]>([]);
 /** Maps root post IDs to flat reply lists used for thread rendering. */
 const threadRepliesByRoot = ref<Record<string, TimelinePost[]>>({});
 const err = ref("");
+const feedLoading = ref(false);
+const feedLoadingMore = ref(false);
+const feedNextCursor = ref("");
+const feedLoadMoreEl = ref<HTMLElement | null>(null);
 const busy = ref(false);
 const caption = ref("");
 const composerCaptionEl = ref<HTMLTextAreaElement | null>(null);
@@ -155,6 +161,8 @@ const repostModalOpen = ref(false);
 const repostTarget = ref<TimelinePost | null>(null);
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 let disconnectFeedStream: (() => void) | null = null;
+let feedLoadObserver: IntersectionObserver | null = null;
+let feedLoadSeq = 0;
 type ComposerVisibility = "public" | "logged_in" | "followers" | "private";
 
 const visibilityOptions = computed<Array<{ value: ComposerVisibility; label: string; description: string }>>(() => [
@@ -287,11 +295,11 @@ async function refreshThreadForRoot(rootId: string) {
   threadRepliesByRoot.value = tr;
 }
 
-async function loadThreadsForFeed() {
+async function loadThreadsForItems(feedItems: TimelinePost[], mode: "replace" | "append") {
   const token = getAccessToken();
   if (!token) return;
-  const withReplies = items.value.filter((x) => x.reply_count > 0 || x.is_federated);
-  const next: Record<string, TimelinePost[]> = {};
+  const withReplies = feedItems.filter((x) => x.reply_count > 0 || x.is_federated);
+  const next: Record<string, TimelinePost[]> = mode === "append" ? { ...threadRepliesByRoot.value } : {};
   await Promise.all(
     withReplies.map(async (it) => {
       const list = it.is_federated
@@ -321,6 +329,20 @@ async function removePost(id: string) {
 function stopFeedStream() {
   disconnectFeedStream?.();
   disconnectFeedStream = null;
+}
+
+function observeFeedLoadMore() {
+  feedLoadObserver?.disconnect();
+  feedLoadObserver = null;
+  const el = feedLoadMoreEl.value;
+  if (!el || typeof IntersectionObserver === "undefined") return;
+  feedLoadObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadMoreFeed();
+    },
+    { rootMargin: "900px 0px 900px 0px" },
+  );
+  feedLoadObserver.observe(el);
 }
 
 function startFeedStream() {
@@ -413,6 +435,8 @@ watch(
 
 onBeforeUnmount(() => {
   stopFeedStream();
+  feedLoadObserver?.disconnect();
+  feedLoadObserver = null;
   previewUrls.value.forEach((u) => URL.revokeObjectURL(u));
   window.removeEventListener("keydown", onLightboxKeydown);
   window.removeEventListener("scroll", updateFeedFabVisibility);
@@ -430,6 +454,10 @@ watch(lightbox, (v) => {
     document.body.style.overflow = "";
     window.removeEventListener("keydown", onLightboxKeydown);
   }
+});
+
+watch(feedLoadMoreEl, () => {
+  void nextTick(observeFeedLoadMore);
 });
 
 async function loadMe() {
@@ -470,10 +498,24 @@ async function syncTimelineSettings() {
   }
 }
 
-function builtInFeedPath(scope: BuiltInTimelineID): string {
-  if (scope === "following") return "/api/v1/posts/feed?scope=following";
-  if (scope === "recommended") return "/api/v1/posts/feed?scope=recommended";
-  return "/api/v1/posts/feed";
+function builtInFeedPath(scope: BuiltInTimelineID, opts: { limit: number; cursor?: string }): string {
+  const q = new URLSearchParams();
+  q.set("limit", String(opts.limit));
+  if (opts.cursor) q.set("cursor", opts.cursor);
+  if (scope === "following" || scope === "recommended") q.set("scope", scope);
+  return `/api/v1/posts/feed?${q}`;
+}
+
+function mergeTimelineItems(current: TimelinePost[], incoming: TimelinePost[]): TimelinePost[] {
+  const seen = new Set(current.map((it) => it.feed_entry_id || it.id));
+  const out = current.slice();
+  for (const it of incoming) {
+    const key = it.feed_entry_id || it.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(it);
+  }
+  return out;
 }
 
 async function setActiveTimeline(id: string) {
@@ -484,33 +526,76 @@ async function setActiveTimeline(id: string) {
   startFeedStream();
 }
 
+async function fetchTimelinePage(cursor = ""): Promise<FeedPage> {
+  const token = getAccessToken();
+  if (!token) {
+    await router.replace("/login");
+    return { items: [], next_cursor: "" };
+  }
+  const timeline = activeTimeline.value;
+  if (timeline.kind === "custom") {
+    return fetchCustomTimelineFeedItems(timeline.filters, timeline.sort, token, {
+      limit: FEED_PAGE_LIMIT,
+      cursor,
+    });
+  }
+  const res = await api<{ items: Parameters<typeof mapFeedItem>[0][]; next_cursor?: string }>(
+    builtInFeedPath(timeline.id as BuiltInTimelineID, { limit: FEED_PAGE_LIMIT, cursor }),
+    {
+      method: "GET",
+      token,
+    },
+  );
+  return {
+    items: (res.items ?? []).map((x) => mapFeedItem(x)),
+    next_cursor: typeof res.next_cursor === "string" ? res.next_cursor : "",
+  };
+}
+
 async function load() {
   const token = getAccessToken();
   if (!token) {
     await router.replace("/login");
     return;
   }
+  const seq = ++feedLoadSeq;
   err.value = "";
+  feedLoading.value = true;
+  feedNextCursor.value = "";
   try {
-    const timeline = activeTimeline.value;
-    if (timeline.kind === "custom") {
-      items.value = await fetchCustomTimelineFeedItems(timeline.filters, timeline.sort, token);
-    } else {
-      const res = await api<{ items: TimelinePost[] }>(builtInFeedPath(timeline.id as BuiltInTimelineID), {
-        method: "GET",
-        token,
-      });
-      items.value = res.items.map((x) => mapFeedItem(x as Parameters<typeof mapFeedItem>[0]));
-    }
-    await loadThreadsForFeed();
+    const page = await fetchTimelinePage();
+    if (seq !== feedLoadSeq) return;
+    items.value = page.items;
+    feedNextCursor.value = page.next_cursor;
+    await loadThreadsForItems(page.items, "replace");
   } catch (e: unknown) {
     err.value = e instanceof Error ? e.message : t("views.feed.loadFailed");
     threadRepliesByRoot.value = {};
+  } finally {
+    if (seq === feedLoadSeq) feedLoading.value = false;
   }
 }
 
 async function refreshFeed() {
   await load();
+}
+
+async function loadMoreFeed() {
+  const cursor = feedNextCursor.value;
+  if (!cursor || feedLoading.value || feedLoadingMore.value) return;
+  const seq = feedLoadSeq;
+  feedLoadingMore.value = true;
+  try {
+    const page = await fetchTimelinePage(cursor);
+    if (seq !== feedLoadSeq) return;
+    items.value = mergeTimelineItems(items.value, page.items);
+    feedNextCursor.value = page.next_cursor;
+    await loadThreadsForItems(page.items, "append");
+  } catch (e: unknown) {
+    err.value = e instanceof Error ? e.message : t("views.feed.loadFailed");
+  } finally {
+    if (seq === feedLoadSeq) feedLoadingMore.value = false;
+  }
 }
 
 function cancelReply() {
@@ -721,6 +806,7 @@ onMounted(() => {
       void router.replace({ path: "/feed", query: {} });
     }
   })();
+  void nextTick(observeFeedLoadMore);
 });
 
 function onFilesSelect(e: Event) {
@@ -1507,7 +1593,11 @@ function addPollOptionField() {
     </p>
     <p v-if="err" class="border-b border-neutral-200 px-4 py-3 text-sm text-red-600">{{ err }}</p>
 
-    <p v-if="!items.length && !err" class="border-b border-neutral-200 px-4 py-16 text-center text-neutral-500">
+    <p v-if="feedLoading && !items.length && !err" class="border-b border-neutral-200 px-4 py-16 text-center text-neutral-500">
+      {{ $t("views.feed.loading") }}
+    </p>
+
+    <p v-else-if="!items.length && !err" class="border-b border-neutral-200 px-4 py-16 text-center text-neutral-500">
       {{
         activeTimeline.kind === "custom"
           ? $t("views.feed.emptyCustom")
@@ -1535,6 +1625,22 @@ function addPollOptionField() {
       @patch-item="({ id, patch }) => patchItem(id, patch)"
       @remove-post="removePost"
     />
+    <div
+      ref="feedLoadMoreEl"
+      class="border-b border-neutral-200 px-4 py-6 text-center text-sm text-neutral-500"
+      aria-live="polite"
+    >
+      <span v-if="feedLoadingMore">{{ $t("views.feed.loadingMore") }}</span>
+      <button
+        v-else-if="feedNextCursor"
+        type="button"
+        class="rounded-full border border-neutral-200 px-4 py-1.5 font-medium text-neutral-700 hover:bg-neutral-50"
+        @click="loadMoreFeed"
+      >
+        {{ $t("views.feed.loadMore") }}
+      </button>
+      <span v-else-if="items.length">{{ $t("views.feed.endOfFeed") }}</span>
+    </div>
   </PullToRefresh>
   <RouterLink
     to="/compose"

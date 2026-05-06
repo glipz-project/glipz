@@ -20,6 +20,13 @@ func RunNotifications(ctx context.Context, pool *pgxpool.Pool) error {
 	if n == 0 {
 		return nil
 	}
+	hasPosts, err := tableExists(ctx, pool, "posts")
+	if err != nil {
+		return fmt.Errorf("migrate notifications: check posts: %w", err)
+	}
+	if !hasPosts {
+		return nil
+	}
 
 	steps := []string{
 		`CREATE TABLE IF NOT EXISTS notifications (

@@ -9,6 +9,11 @@ export type FeedPubPayload =
   | { v: number; kind: "federated_post_upsert"; incoming_id: string }
   | { v: number; kind: "federated_post_deleted"; incoming_id: string };
 
+export type FeedPage = {
+  items: TimelinePost[];
+  next_cursor: string;
+};
+
 /** Consumes complete SSE blocks and returns the unfinished remainder still buffered. */
 function consumeSseBuffer(buf: string, onDataLine: (line: string) => void): string {
   for (;;) {
@@ -273,13 +278,25 @@ export async function fetchPublicFeedItems(): Promise<TimelinePost[]> {
   }
 }
 
-export async function fetchCustomTimelineFeedItems(filters: TimelineFilters, sort: TimelineSort, token: string): Promise<TimelinePost[]> {
-  const res = await api<{ items: Parameters<typeof mapFeedItem>[0][] }>("/api/v1/posts/feed/custom", {
+export async function fetchCustomTimelineFeedItems(
+  filters: TimelineFilters,
+  sort: TimelineSort,
+  token: string,
+  opts: { limit?: number; cursor?: string } = {},
+): Promise<FeedPage> {
+  const q = new URLSearchParams();
+  if (opts.limit && opts.limit > 0) q.set("limit", String(opts.limit));
+  if (opts.cursor) q.set("cursor", opts.cursor);
+  const path = `/api/v1/posts/feed/custom${q.toString() ? `?${q}` : ""}`;
+  const res = await api<{ items: Parameters<typeof mapFeedItem>[0][]; next_cursor?: string }>(path, {
     method: "POST",
     token,
     json: { filters, sort },
   });
-  return (res.items ?? []).map((x) => mapFeedItem(x));
+  return {
+    items: (res.items ?? []).map((x) => mapFeedItem(x)),
+    next_cursor: typeof res.next_cursor === "string" ? res.next_cursor : "",
+  };
 }
 
 /** Fetches a single post using the feed projection. Omitting token keeps the request anonymous. */

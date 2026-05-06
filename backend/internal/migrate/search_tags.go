@@ -20,6 +20,10 @@ func RunSearchTags(ctx context.Context, pool *pgxpool.Pool) error {
 	if n == 0 {
 		return nil
 	}
+	hasFederationIncoming, err := tableExists(ctx, pool, "federation_incoming_posts")
+	if err != nil {
+		return fmt.Errorf("migrate search tags: check federation incoming: %w", err)
+	}
 	steps := []string{
 		`CREATE TABLE IF NOT EXISTS hashtags (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,14 +40,18 @@ func RunSearchTags(ctx context.Context, pool *pgxpool.Pool) error {
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_post_hashtags_hashtag
 			ON post_hashtags (hashtag_id, post_id)`,
-		`CREATE TABLE IF NOT EXISTS federation_incoming_post_hashtags (
-			federation_incoming_post_id UUID NOT NULL REFERENCES federation_incoming_posts (id) ON DELETE CASCADE,
-			hashtag_id UUID NOT NULL REFERENCES hashtags (id) ON DELETE CASCADE,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			PRIMARY KEY (federation_incoming_post_id, hashtag_id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_federation_incoming_post_hashtags_hashtag
-			ON federation_incoming_post_hashtags (hashtag_id, federation_incoming_post_id)`,
+	}
+	if hasFederationIncoming {
+		steps = append(steps,
+			`CREATE TABLE IF NOT EXISTS federation_incoming_post_hashtags (
+				federation_incoming_post_id UUID NOT NULL REFERENCES federation_incoming_posts (id) ON DELETE CASCADE,
+				hashtag_id UUID NOT NULL REFERENCES hashtags (id) ON DELETE CASCADE,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				PRIMARY KEY (federation_incoming_post_id, hashtag_id)
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_federation_incoming_post_hashtags_hashtag
+				ON federation_incoming_post_hashtags (hashtag_id, federation_incoming_post_id)`,
+		)
 	}
 	for i, q := range steps {
 		if _, err := pool.Exec(ctx, q); err != nil {

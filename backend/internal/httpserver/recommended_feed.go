@@ -23,6 +23,14 @@ type recCandidate struct {
 
 func (s *Server) handleRecommendedFeed(w http.ResponseWriter, r *http.Request, viewerID uuid.UUID) {
 	ctx := r.Context()
+	pageLimit, offset := feedPageParams(r, s.cfg.FeedPageSize)
+	targetLimit := offset + pageLimit + 1
+	if targetLimit < 50 {
+		targetLimit = 50
+	}
+	if targetLimit > 450 {
+		targetLimit = 450
+	}
 
 	aff, err := s.db.AuthorAffinityScores(ctx, viewerID, time.Now().Add(-90*24*time.Hour))
 	if err != nil {
@@ -30,7 +38,11 @@ func (s *Server) handleRecommendedFeed(w http.ResponseWriter, r *http.Request, v
 		return
 	}
 
-	ids, err := s.db.RecommendedCandidatePostIDs(ctx, viewerID, 450)
+	candidateLimit := targetLimit * 9
+	if candidateLimit > 1000 {
+		candidateLimit = 1000
+	}
+	ids, err := s.db.RecommendedCandidatePostIDs(ctx, viewerID, candidateLimit)
 	if err != nil {
 		writeServerError(w, "RecommendedCandidatePostIDs", err)
 		return
@@ -113,14 +125,13 @@ func (s *Server) handleRecommendedFeed(w http.ResponseWriter, r *http.Request, v
 
 	// diversity constraints
 	const (
-		limit        = 50
 		maxPerAuthor = 3
 	)
 	authorCount := map[string]int{}
 	var out []recCandidate
 	lastAuthor := ""
 	for _, c := range cands {
-		if len(out) >= limit {
+		if len(out) >= targetLimit {
 			break
 		}
 		if c.authorKey == "" {
@@ -137,9 +148,9 @@ func (s *Server) handleRecommendedFeed(w http.ResponseWriter, r *http.Request, v
 		out = append(out, c)
 	}
 	// Backfill remaining slots while relaxing only the consecutive-author constraint.
-	if len(out) < limit {
+	if len(out) < targetLimit {
 		for _, c := range cands {
-			if len(out) >= limit {
+			if len(out) >= targetLimit {
 				break
 			}
 			if c.authorKey == "" {
@@ -214,7 +225,7 @@ func (s *Server) handleRecommendedFeed(w http.ResponseWriter, r *http.Request, v
 		}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	writeJSON(w, http.StatusOK, feedPageResponse(sliceFeedItemsForPage(items, pageLimit+1, offset), pageLimit, offset))
 }
 
 func maxI64(a int64, b int64) int64 {

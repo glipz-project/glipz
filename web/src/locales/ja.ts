@@ -1039,6 +1039,10 @@ export const jaMessages = {
     },
     feed: {
       loadFailed: "読み込みに失敗しました",
+      loading: "読み込み中…",
+      loadingMore: "続きを読み込み中…",
+      loadMore: "もっと読む",
+      endOfFeed: "ここまでです。",
       scopeAll: "すべて",
       scopeRecommended: "おすすめ",
       scopeFollowing: "フォロー中",

@@ -20,6 +20,13 @@ func RunPinnedPosts(ctx context.Context, pool *pgxpool.Pool) error {
 	if n == 0 {
 		return nil
 	}
+	hasPosts, err := tableExists(ctx, pool, "posts")
+	if err != nil {
+		return fmt.Errorf("pinned_posts: check posts: %w", err)
+	}
+	if !hasPosts {
+		return nil
+	}
 
 	steps := []string{
 		`ALTER TABLE users ADD COLUMN IF NOT EXISTS pinned_post_id UUID`,

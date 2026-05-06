@@ -20,6 +20,10 @@ func RunIDPortability(ctx context.Context, pool *pgxpool.Pool) error {
 	if n == 0 {
 		return nil
 	}
+	hasPosts, err := tableExists(ctx, pool, "posts")
+	if err != nil {
+		return fmt.Errorf("migrate id portability: check posts: %w", err)
+	}
 
 	steps := []string{
 		`ALTER TABLE users ADD COLUMN IF NOT EXISTS portable_id TEXT`,
@@ -151,21 +155,24 @@ END $$`,
 			WHERE status IN ('pending', 'running')`,
 		`CREATE INDEX IF NOT EXISTS idx_identity_transfer_import_jobs_user
 			ON identity_transfer_import_jobs (user_id, created_at DESC)`,
-
-		`CREATE TABLE IF NOT EXISTS identity_transfer_post_mappings (
-			job_id UUID NOT NULL REFERENCES identity_transfer_import_jobs (id) ON DELETE CASCADE,
-			user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-			source_post_id TEXT NOT NULL,
-			original_object_id TEXT NOT NULL,
-			new_post_id UUID REFERENCES posts (id) ON DELETE SET NULL,
-			status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'imported', 'failed', 'skipped')),
-			last_error TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			PRIMARY KEY (job_id, original_object_id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_identity_transfer_post_mappings_user
-			ON identity_transfer_post_mappings (user_id, created_at DESC)`,
+	}
+	if hasPosts {
+		steps = append(steps,
+			`CREATE TABLE IF NOT EXISTS identity_transfer_post_mappings (
+				job_id UUID NOT NULL REFERENCES identity_transfer_import_jobs (id) ON DELETE CASCADE,
+				user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+				source_post_id TEXT NOT NULL,
+				original_object_id TEXT NOT NULL,
+				new_post_id UUID REFERENCES posts (id) ON DELETE SET NULL,
+				status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'imported', 'failed', 'skipped')),
+				last_error TEXT NOT NULL DEFAULT '',
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				PRIMARY KEY (job_id, original_object_id)
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_identity_transfer_post_mappings_user
+				ON identity_transfer_post_mappings (user_id, created_at DESC)`,
+		)
 	}
 	for i, q := range steps {
 		if _, err := pool.Exec(ctx, q); err != nil {

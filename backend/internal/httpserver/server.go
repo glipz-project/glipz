@@ -2573,6 +2573,60 @@ func mergeFeedItemsByVisibleAt(a []feedItem, b []feedItem, limit int) []feedItem
 	return out
 }
 
+func sliceFeedItemsForPage(items []feedItem, limit int, offset int) []feedItem {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = 30
+	}
+	if offset >= len(items) {
+		return []feedItem{}
+	}
+	end := offset + limit
+	if end > len(items) {
+		end = len(items)
+	}
+	return items[offset:end]
+}
+
+func feedPageParams(r *http.Request, defaultLimit int) (int, int) {
+	limit := defaultLimit
+	if limit <= 0 {
+		limit = 30
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil {
+			limit = n
+		}
+	}
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	offset := 0
+	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+			offset = n
+		}
+	}
+	if offset > 500 {
+		offset = 500
+	}
+	return limit, offset
+}
+
+func feedPageResponse(items []feedItem, limit int, offset int) map[string]any {
+	next := ""
+	if len(items) > limit {
+		items = items[:limit]
+		next = strconv.Itoa(offset + limit)
+	}
+	return map[string]any{"items": items, "next_cursor": next}
+}
+
 func mergeBookmarkedFeedItems(local []repo.BookmarkedPostRow, localItems []feedItem, fed []repo.BookmarkedFederatedIncomingPost, fedItems []feedItem, limit int) []feedItem {
 	type tagged struct {
 		t  time.Time
@@ -2641,13 +2695,23 @@ func (s *Server) handleFeed(w http.ResponseWriter, r *http.Request) {
 		s.handleRecommendedFeed(w, r, uid)
 		return
 	}
-	cacheKey := uid.String() + "|" + scope
+	limit, offset := feedPageParams(r, s.cfg.FeedPageSize)
+	if offset > 0 {
+		items, err := s.feedItemsForViewer(r.Context(), uid, scope, limit+1, offset)
+		if err != nil {
+			writeServerError(w, "feedItemsForViewer", err)
+			return
+		}
+		writeJSON(w, http.StatusOK, feedPageResponse(items, limit, offset))
+		return
+	}
+	cacheKey := fmt.Sprintf("%s|%s|%d|%d", uid, scope, limit, offset)
 	v, hit, err := s.userFeedCache.getOrLoad(time.Now(), cacheKey, 5*time.Second, func() (any, error) {
-		items, err := s.feedItemsForViewer(r.Context(), uid, scope)
+		items, err := s.feedItemsForViewer(r.Context(), uid, scope, limit+1, offset)
 		if err != nil {
 			return nil, err
 		}
-		return json.Marshal(map[string]any{"items": items})
+		return json.Marshal(feedPageResponse(items, limit, offset))
 	})
 	if hit {
 		operationTotal.Add("cache.user_feed.hit", 1)
@@ -2717,7 +2781,12 @@ func (s *Server) handleCustomFeed(w http.ResponseWriter, r *http.Request) {
 	if scope != "following" {
 		scope = ""
 	}
-	items, err := s.feedItemsForViewer(r.Context(), uid, scope)
+	limit, offset := feedPageParams(r, s.cfg.FeedPageSize)
+	sourceLimit := offset + limit + 1
+	if sourceLimit > 100 {
+		sourceLimit = 100
+	}
+	items, err := s.feedItemsForViewer(r.Context(), uid, scope, sourceLimit, 0)
 	if err != nil {
 		writeServerError(w, "feedItemsForViewer custom", err)
 		return
@@ -2731,7 +2800,7 @@ func (s *Server) handleCustomFeed(w http.ResponseWriter, r *http.Request) {
 		}
 		items = ranked
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	writeJSON(w, http.StatusOK, feedPageResponse(sliceFeedItemsForPage(items, limit+1, offset), limit, offset))
 }
 
 func normalizeCustomFeedTerms(values []string, limit int) []string {
@@ -3025,20 +3094,26 @@ func (s *Server) rankCustomFeedItems(ctx context.Context, uid uuid.UUID, items [
 	return applyCustomFeedDiversity(ranked, config.constraints.diversity), nil
 }
 
-func (s *Server) feedItemsForViewer(ctx context.Context, uid uuid.UUID, scope string) ([]feedItem, error) {
-	limit := s.cfg.FeedPageSize
+func (s *Server) feedItemsForViewer(ctx context.Context, uid uuid.UUID, scope string, limit int, offset int) ([]feedItem, error) {
+	if limit <= 0 {
+		limit = s.cfg.FeedPageSize
+	}
 	if limit <= 0 {
 		limit = 30
+	}
+	sourceLimit := limit + offset
+	if sourceLimit > 100 {
+		sourceLimit = 100
 	}
 	var posts []repo.PostRow
 	var err error
 	if scope == "following" {
 		start := time.Now()
-		posts, err = s.db.ListFeedFollowing(ctx, uid, limit)
+		posts, err = s.db.ListFeedFollowing(ctx, uid, sourceLimit)
 		observeOperation("db.ListFeedFollowing", start, err)
 	} else {
 		start := time.Now()
-		posts, err = s.db.ListFeed(ctx, uid, limit)
+		posts, err = s.db.ListFeed(ctx, uid, sourceLimit)
 		observeOperation("db.ListFeed", start, err)
 	}
 	if err != nil {
@@ -3047,17 +3122,17 @@ func (s *Server) feedItemsForViewer(ctx context.Context, uid uuid.UUID, scope st
 	var reposts []repo.RepostFeedEntry
 	if scope == "following" {
 		start := time.Now()
-		reposts, err = s.db.ListRecentRepostsFollowing(ctx, uid, limit)
+		reposts, err = s.db.ListRecentRepostsFollowing(ctx, uid, sourceLimit)
 		observeOperation("db.ListRecentRepostsFollowing", start, err)
 	} else {
 		start := time.Now()
-		reposts, err = s.db.ListRecentRepostsAll(ctx, uid, limit)
+		reposts, err = s.db.ListRecentRepostsAll(ctx, uid, sourceLimit)
 		observeOperation("db.ListRecentRepostsAll", start, err)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("ListRecentReposts: %w", err)
 	}
-	cells := mergePostsAndReposts(posts, reposts, limit)
+	cells := mergePostsAndReposts(posts, reposts, sourceLimit)
 	items, err := s.encodeTimelineCells(ctx, cells, uid)
 	if err != nil {
 		return nil, fmt.Errorf("encodeTimelineCells: %w", err)
@@ -3066,11 +3141,11 @@ func (s *Server) feedItemsForViewer(ctx context.Context, uid uuid.UUID, scope st
 	var errR error
 	if scope == "following" {
 		start := time.Now()
-		remoteRows, errR = s.db.ListFederatedIncomingForRemoteFollows(ctx, uid, limit)
+		remoteRows, errR = s.db.ListFederatedIncomingForRemoteFollows(ctx, uid, sourceLimit)
 		observeOperation("db.ListFederatedIncomingForRemoteFollows", start, errR)
 	} else {
 		start := time.Now()
-		remoteRows, errR = s.db.ListFederatedIncomingForViewer(ctx, uid, limit, nil, nil)
+		remoteRows, errR = s.db.ListFederatedIncomingForViewer(ctx, uid, sourceLimit, nil, nil)
 		observeOperation("db.ListFederatedIncomingForViewer", start, errR)
 	}
 	if errR != nil {
@@ -3080,8 +3155,8 @@ func (s *Server) feedItemsForViewer(ctx context.Context, uid uuid.UUID, scope st
 	for _, row := range remoteRows {
 		fedItems = append(fedItems, s.federatedIncomingToFeedItem(row))
 	}
-	items = mergeFeedItemsByVisibleAt(items, fedItems, limit)
-	return items, nil
+	items = mergeFeedItemsByVisibleAt(items, fedItems, sourceLimit)
+	return sliceFeedItemsForPage(items, limit, offset), nil
 }
 
 func (s *Server) handleBookmarks(w http.ResponseWriter, r *http.Request) {

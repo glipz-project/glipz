@@ -1073,6 +1073,10 @@ export const enOverrides: DeepPartial<AppMessageSchema> = {
     },
     feed: {
       loadFailed: "Failed to load",
+      loading: "Loading…",
+      loadingMore: "Loading more…",
+      loadMore: "Load more",
+      endOfFeed: "You're caught up.",
       scopeAll: "All",
       scopeRecommended: "For you",
       scopeFollowing: "Following",

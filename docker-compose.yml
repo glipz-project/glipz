@@ -16,7 +16,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U glipz -d glipz"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U glipz -d glipz"]
       interval: 3s
       timeout: 5s
       retries: 10
