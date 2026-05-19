@@ -50,6 +50,9 @@ version. Federation protocol compatibility is versioned separately with
 
 - The Glipz logo and app icon assets were refreshed, with light/dark logo
   variants used across the app shell and auth pages.
+- Home, following, recommended, and custom timeline feeds now return paginated
+  responses with `next_cursor`, and the web feed loads additional pages through
+  an inline "Load more" control plus viewport prefetching.
 - Admin report, federation, custom emoji, and legal request pages now follow the
   dashboard layout for page width, headings, cards, forms, and primary actions.
 - Account deletion now respects active legal preservation holds.
@@ -85,6 +88,11 @@ version. Federation protocol compatibility is versioned separately with
   event IDs before issuing responses.
 - Registration verification removes the short-lived token from the URL after it
   is read, reducing accidental token exposure in browser history or logs.
+- Startup migrations now check for dependent base tables before applying
+  follow-up federation, notification, pinned-post, legal-compliance, moderation,
+  and search-tag steps, making partially initialized databases safer to upgrade.
+- Frontend dependency locks were refreshed to resolve `marked` and
+  `brace-expansion` denial-of-service advisories reported by `npm audit`.
 
 ### Database Migrations
 

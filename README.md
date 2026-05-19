@@ -39,7 +39,7 @@ Key features include:
 
 | Feature | Description |
 |---------|-------------|
-| **Timelines** | Home, local, and federated timelines |
+| **Timelines** | Home, local, and federated timelines with paginated loading |
 | **Posts** | Text, media, polls, scheduled publishing; optional view password or Patreon membership gate |
 | **Replies & Threads** | Full threaded conversations |
 | **Reposts** | Share posts with optional commentary |
@@ -369,6 +369,14 @@ curl -X POST -H "Authorization: Bearer $TARGET_TOKEN" \
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
   https://your-instance.com/api/v1/posts/feed
+```
+
+Feed endpoints accept `limit` and `cursor` query parameters and return
+`next_cursor` when another page is available:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  'https://your-instance.com/api/v1/posts/feed?scope=recommended&limit=20&cursor=20'
 ```
 
 ### Example: Communities

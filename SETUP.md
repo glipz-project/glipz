@@ -166,6 +166,9 @@ On first startup, the backend:
   ID portability, bookmarks/follows, communities, profile pinned posts, timeline
   settings, moderation, legal-compliance storage, direct messages, web push, and
   optional fan-club storage
+- Skips dependent migration steps until their base tables exist, so partially
+  initialized local databases can be recovered by restarting after the base
+  schema is present
 - Initializes the configured media store (`local` folder or S3-compatible storage)
 - Starts the HTTP server
 
