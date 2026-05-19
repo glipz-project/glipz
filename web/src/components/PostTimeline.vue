@@ -1392,7 +1392,10 @@ async function submitUnlock(it: TimelinePost) {
                     :src="url"
                     alt=""
                     class="h-full w-full scale-110 object-cover blur-2xl brightness-75"
+                    draggable="false"
                     loading="lazy"
+                    @contextmenu.prevent
+                    @dragstart.prevent
                   />
                 </div>
               </div>
@@ -1426,6 +1429,8 @@ async function submitUnlock(it: TimelinePost) {
                       total: safeMediaURLs(it).length,
                     })
                   "
+                  @contextmenu.prevent
+                  @dragstart.prevent
                   @click="emit('openLightbox', safeMediaURLs(it), mediaIndexFromGridSlot(safeMediaURLs(it), gi))"
                 >
                   <img
@@ -1436,7 +1441,10 @@ async function submitUnlock(it: TimelinePost) {
                         ? 'pointer-events-none max-h-[510px] w-full object-contain sm:max-h-[70vh]'
                         : 'pointer-events-none h-full w-full object-cover'
                     "
+                    draggable="false"
                     loading="lazy"
+                    @contextmenu.prevent
+                    @dragstart.prevent
                   />
                 </button>
                 <div

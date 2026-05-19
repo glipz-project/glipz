@@ -85,6 +85,7 @@ func TestHandlePublicMediaObjectRejectsUnmanagedObjectKeys(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodHead, "/media/object/"+key, nil)
+	req.Header.Set("Sec-Fetch-Dest", "image")
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("HEAD allowed key status = %d, want 200", rec.Code)
@@ -92,6 +93,7 @@ func TestHandlePublicMediaObjectRejectsUnmanagedObjectKeys(t *testing.T) {
 
 	rec = httptest.NewRecorder()
 	req = httptest.NewRequest(http.MethodGet, "/media/object/"+key, nil)
+	req.Header.Set("Sec-Fetch-Dest", "image")
 	req.Header.Set("Range", "bytes=6-10")
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusPartialContent {
@@ -112,6 +114,49 @@ func TestHandlePublicMediaObjectRejectsUnmanagedObjectKeys(t *testing.T) {
 		if rec.Code != http.StatusNotFound {
 			t.Fatalf("GET %s status = %d, want 404", path, rec.Code)
 		}
+	}
+}
+
+func TestHandlePublicMediaObjectReturnsDecoyForDirectDownloads(t *testing.T) {
+	store, err := s3client.NewLocal(t.TempDir(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &Server{s3: store}
+	r := chi.NewRouter()
+	r.Get("/media/object/*", s.handlePublicMediaObject)
+	r.Head("/media/object/*", s.handlePublicMediaObject)
+
+	key := "uploads/" + uuid.NewString() + "/file.png"
+	if err := store.PutObject(t.Context(), key, "image/png", strings.NewReader("actual image bytes"), int64(len("actual image bytes"))); err != nil {
+		t.Fatal(err)
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/media/object/"+key, nil)
+	req.Header.Set("Sec-Fetch-Dest", "document")
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET direct status = %d, want 200", rec.Code)
+	}
+	if got := rec.Header().Get("Content-Disposition"); !strings.Contains(got, "protected-media.txt") {
+		t.Fatalf("Content-Disposition = %q, want protected-media attachment", got)
+	}
+	if got := rec.Body.String(); got != protectedMediaDownloadBody {
+		t.Fatalf("direct body = %q, want decoy", got)
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodGet, "/media/object/"+key, nil)
+	req.Header.Set("Sec-Fetch-Dest", "image")
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET image status = %d, want 200", rec.Code)
+	}
+	if got := rec.Body.String(); got != "actual image bytes" {
+		t.Fatalf("inline body = %q, want actual media", got)
 	}
 }
 

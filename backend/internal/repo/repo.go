@@ -27,6 +27,9 @@ var ErrCannotFollowSelf = errors.New("cannot follow self")
 // ErrForbidden is returned for operations without sufficient permission.
 var ErrForbidden = errors.New("forbidden")
 
+// ErrPinnedPostsLimit is returned when a profile already has the maximum number of pinned posts.
+var ErrPinnedPostsLimit = errors.New("pinned posts limit")
+
 // ErrLegalPreservationHoldActive is returned when a legal hold blocks deletion.
 var ErrLegalPreservationHoldActive = errors.New("legal preservation hold active")
 
@@ -228,6 +231,7 @@ type PublicProfile struct {
 	AvatarObjectKey     *string
 	HeaderObjectKey     *string
 	PinnedPostID        *uuid.UUID
+	PinnedPostIDs       []uuid.UUID
 }
 
 // FollowListUser represents a user row for follower and following lists.
@@ -517,16 +521,18 @@ func (p *Pool) PublicProfileByHandle(ctx context.Context, handle string) (Public
 	var av pgtype.Text
 	var hdr pgtype.Text
 	var pinned pgtype.UUID
+	var pinnedIDs []uuid.UUID
 	var badges []string
 	var urlRaw []byte
 	var alsoKnownAs []string
 	err := p.db.QueryRow(ctx, `
 		SELECT id, email, handle, display_name, bio, COALESCE(badges, '{}'::text[]), avatar_object_key, header_object_key,
 			pinned_post_id,
+			COALESCE(pinned_post_ids, CASE WHEN pinned_post_id IS NULL THEN '{}'::uuid[] ELSE ARRAY[pinned_post_id] END),
 			COALESCE(profile_external_urls, '[]'::jsonb)::text,
 			COALESCE(portable_id, ''), COALESCE(account_public_key, ''), COALESCE(moved_to_acct, ''), COALESCE(also_known_as, '{}'::text[])
 		FROM users WHERE lower(handle) = lower($1)
-	`, handle).Scan(&pfl.ID, &pfl.Email, &pfl.Handle, &pfl.DisplayName, &pfl.Bio, &badges, &av, &hdr, &pinned, &urlRaw,
+	`, handle).Scan(&pfl.ID, &pfl.Email, &pfl.Handle, &pfl.DisplayName, &pfl.Bio, &badges, &av, &hdr, &pinned, &pinnedIDs, &urlRaw,
 		&pfl.PortableID, &pfl.AccountPublicKey, &pfl.MovedToAcct, &alsoKnownAs)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return PublicProfile{}, ErrNotFound
@@ -546,10 +552,34 @@ func (p *Pool) PublicProfileByHandle(ctx context.Context, handle string) (Public
 		id := uuid.UUID(pinned.Bytes)
 		pfl.PinnedPostID = &id
 	}
+	pfl.PinnedPostIDs = normalizePinnedPostIDs(pinnedIDs, pfl.PinnedPostID)
+	if len(pfl.PinnedPostIDs) > 0 {
+		id := pfl.PinnedPostIDs[0]
+		pfl.PinnedPostID = &id
+	}
 	pfl.Badges = NormalizeUserBadges(badges)
 	pfl.ProfileExternalURLs = unmarshalProfileExternalURLsJSON(urlRaw)
 	pfl.AlsoKnownAs = append([]string(nil), alsoKnownAs...)
 	return pfl, nil
+}
+
+func normalizePinnedPostIDs(ids []uuid.UUID, legacy *uuid.UUID) []uuid.UUID {
+	out := make([]uuid.UUID, 0, 5)
+	seen := map[uuid.UUID]bool{}
+	for _, id := range ids {
+		if id == uuid.Nil || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, id)
+		if len(out) >= 5 {
+			return out
+		}
+	}
+	if legacy != nil && *legacy != uuid.Nil && !seen[*legacy] && len(out) < 5 {
+		out = append(out, *legacy)
+	}
+	return out
 }
 
 func (p *Pool) UpdateUserProfile(ctx context.Context, userID uuid.UUID, bio, displayName, handle, avatarKey, headerKey string, profileExternalURLs []string, isBot, isAI bool) error {
@@ -1380,30 +1410,93 @@ func (p *Pool) SetPinnedPost(ctx context.Context, userID, postID uuid.UUID) erro
 	if reply.Valid || strings.TrimSpace(remoteReply) != "" {
 		return ErrForbidden
 	}
-	ct, err := p.db.Exec(ctx, `UPDATE users SET pinned_post_id = $2 WHERE id = $1`, userID, postID)
+	tx, err := p.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	if ct.RowsAffected() == 0 {
+	defer tx.Rollback(ctx)
+	var ids []uuid.UUID
+	var legacy pgtype.UUID
+	err = tx.QueryRow(ctx, `
+		SELECT COALESCE(pinned_post_ids, '{}'::uuid[]), pinned_post_id
+		FROM users
+		WHERE id = $1
+		FOR UPDATE
+	`, userID).Scan(&ids, &legacy)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+	var legacyID *uuid.UUID
+	if legacy.Valid {
+		id := uuid.UUID(legacy.Bytes)
+		legacyID = &id
+	}
+	ids = normalizePinnedPostIDs(ids, legacyID)
+	for _, id := range ids {
+		if id == postID {
+			return tx.Commit(ctx)
+		}
+	}
+	if len(ids) >= 5 {
+		return ErrPinnedPostsLimit
+	}
+	ids = append([]uuid.UUID{postID}, ids...)
+	if _, err := tx.Exec(ctx, `UPDATE users SET pinned_post_ids = $2, pinned_post_id = $3 WHERE id = $1`, userID, ids, ids[0]); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 // ClearPinnedPost removes the user's profile pin when it points at postID.
 func (p *Pool) ClearPinnedPost(ctx context.Context, userID, postID uuid.UUID) error {
-	ct, err := p.db.Exec(ctx, `
-		UPDATE users
-		SET pinned_post_id = NULL
-		WHERE id = $1 AND pinned_post_id = $2
-	`, userID, postID)
+	tx, err := p.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	if ct.RowsAffected() == 0 {
+	defer tx.Rollback(ctx)
+	var ids []uuid.UUID
+	var legacy pgtype.UUID
+	err = tx.QueryRow(ctx, `
+		SELECT COALESCE(pinned_post_ids, '{}'::uuid[]), pinned_post_id
+		FROM users
+		WHERE id = $1
+		FOR UPDATE
+	`, userID).Scan(&ids, &legacy)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+	var legacyID *uuid.UUID
+	if legacy.Valid {
+		id := uuid.UUID(legacy.Bytes)
+		legacyID = &id
+	}
+	ids = normalizePinnedPostIDs(ids, legacyID)
+	next := make([]uuid.UUID, 0, len(ids))
+	removed := false
+	for _, id := range ids {
+		if id == postID {
+			removed = true
+			continue
+		}
+		next = append(next, id)
+	}
+	if !removed {
+		return ErrNotFound
+	}
+	var primary any
+	if len(next) > 0 {
+		primary = next[0]
+	}
+	if _, err := tx.Exec(ctx, `UPDATE users SET pinned_post_ids = $2, pinned_post_id = $3 WHERE id = $1`, userID, next, primary); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (p *Pool) DeletePostByActor(ctx context.Context, actorID, postID uuid.UUID, allowForeign bool) error {
@@ -1569,7 +1662,11 @@ func (p *Pool) ListUserPosts(ctx context.Context, viewerID, authorID uuid.UUID, 
 		  AND p.group_id IS NULL
 		  AND `+postReadableByViewerSQL("p", "$1")+`
 		ORDER BY
-			CASE WHEN p.id = (SELECT pinned_post_id FROM users WHERE id = $2) THEN 0 ELSE 1 END,
+			CASE
+				WHEN array_position((SELECT COALESCE(pinned_post_ids, CASE WHEN pinned_post_id IS NULL THEN '{}'::uuid[] ELSE ARRAY[pinned_post_id] END) FROM users WHERE id = $2), p.id) IS NULL THEN 1
+				ELSE 0
+			END,
+			COALESCE(array_position((SELECT COALESCE(pinned_post_ids, CASE WHEN pinned_post_id IS NULL THEN '{}'::uuid[] ELSE ARRAY[pinned_post_id] END) FROM users WHERE id = $2), p.id), 999),
 			p.visible_at DESC,
 			p.id DESC
 		LIMIT $3

@@ -35,6 +35,7 @@ type Profile = {
   avatar_url: string | null;
   header_url: string | null;
   pinned_post_id?: string | null;
+  pinned_post_ids?: string[];
   is_me: boolean;
   follower_count?: number;
   following_count?: number;
@@ -142,10 +143,18 @@ function patchPost(id: string, patch: Partial<TimelinePost>) {
 }
 
 function sortProfilePosts(list: TimelinePost[]): TimelinePost[] {
-  const pinnedId = profile.value?.pinned_post_id ?? "";
+  const pinnedIds = profile.value?.pinned_post_ids?.length
+    ? profile.value.pinned_post_ids
+    : profile.value?.pinned_post_id
+      ? [profile.value.pinned_post_id]
+      : [];
+  const pinnedOrder = new Map(pinnedIds.map((id, index) => [id, index]));
   return [...list]
-    .map((it) => ({ ...it, is_pinned_to_profile: pinnedId ? it.id === pinnedId : Boolean(it.is_pinned_to_profile) }))
+    .map((it) => ({ ...it, is_pinned_to_profile: pinnedOrder.has(it.id) || Boolean(it.is_pinned_to_profile) }))
     .sort((a, b) => {
+      const ai = pinnedOrder.get(a.id);
+      const bi = pinnedOrder.get(b.id);
+      if (ai !== undefined || bi !== undefined) return (ai ?? 999) - (bi ?? 999);
       if (a.is_pinned_to_profile !== b.is_pinned_to_profile) return a.is_pinned_to_profile ? -1 : 1;
       return 0;
     });
@@ -673,7 +682,9 @@ async function toggleProfilePin(it: TimelinePost) {
       method: nextPinned ? "PUT" : "DELETE",
       token,
     });
-    profile.value = { ...p, pinned_post_id: nextPinned ? it.id : null };
+    const current = p.pinned_post_ids?.length ? p.pinned_post_ids : p.pinned_post_id ? [p.pinned_post_id] : [];
+    const pinned_post_ids = nextPinned ? [it.id, ...current.filter((id) => id !== it.id)] : current.filter((id) => id !== it.id);
+    profile.value = { ...p, pinned_post_id: pinned_post_ids[0] ?? null, pinned_post_ids };
     posts.value = sortProfilePosts(posts.value);
     showToast(nextPinned ? t("views.userProfile.toasts.pinSaved") : t("views.userProfile.toasts.pinRemoved"));
   } catch {
@@ -1082,7 +1093,14 @@ watch(handleParam, () => void loadAll());
               </RouterLink>
             </div>
           </div>
-          <div>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h2 class="min-w-0 truncate text-2xl font-bold leading-tight text-neutral-900">
+                {{ profile.display_name }}
+              </h2>
+              <UserBadges :badges="profile.badges" size="sm" />
+            </div>
+            <p class="mt-0.5 truncate text-sm text-neutral-500">{{ profileHandleAt }}</p>
             <p class="mt-1 text-sm text-neutral-600">
               <RouterLink
                 :to="`/@${encodeURIComponent(profile.handle)}/following`"
@@ -1389,6 +1407,8 @@ watch(handleParam, () => void loadAll());
                   :alt="$t('views.feed.lightboxImageAlt', { n: li + 1 })"
                   class="max-h-[min(88vh,100%)] max-w-full object-contain select-none"
                   draggable="false"
+                  @contextmenu.prevent
+                  @dragstart.prevent
                 />
               </div>
             </div>

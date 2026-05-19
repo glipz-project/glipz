@@ -102,8 +102,12 @@ onBeforeUnmount(() => {
     <audio
       ref="audioRef"
       :src="src"
+      controlslist="nodownload noremoteplayback"
+      draggable="false"
       preload="metadata"
       class="hidden"
+      @contextmenu.prevent
+      @dragstart.prevent
       @timeupdate="onTimeUpdate"
       @loadedmetadata="syncFromAudio"
       @durationchange="syncFromAudio"

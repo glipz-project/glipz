@@ -6,7 +6,7 @@ Glipz uses `web/package.json` as the source of truth for the application
 version. Federation protocol compatibility is versioned separately with
 `glipz-federation/{major}` and `event_schema_version`.
 
-## [0.0.3] - 2026-05-01
+## [0.0.3] - 2026-05-25
 
 ### Added
 
@@ -53,6 +53,11 @@ version. Federation protocol compatibility is versioned separately with
 - Home, following, recommended, and custom timeline feeds now return paginated
   responses with `next_cursor`, and the web feed loads additional pages through
   an inline "Load more" control plus viewport prefetching.
+- Profiles can now keep up to five pinned top-level posts instead of a single
+  pinned post, while preserving existing one-post pin data during migration.
+- The backend media proxy now returns a small decoy attachment for direct
+  download-style media requests while still serving app-embedded images, videos,
+  and audio inline.
 - Admin report, federation, custom emoji, and legal request pages now follow the
   dashboard layout for page width, headings, cards, forms, and primary actions.
 - Account deletion now respects active legal preservation holds.

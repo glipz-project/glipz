@@ -3491,6 +3491,10 @@ func (s *Server) handlePatchPost(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
 			return
 		}
+		if errors.Is(err, repo.ErrPinnedPostsLimit) {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "pinned_posts_limit"})
+			return
+		}
 		if errors.Is(err, repo.ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not_found"})
 			return
@@ -4067,6 +4071,7 @@ func (s *Server) handlePublicProfileByHandle(w http.ResponseWriter, r *http.Requ
 		"bio":             pfl.Bio,
 		"profile_urls":    pfl.ProfileExternalURLs,
 		"pinned_post_id":  nil,
+		"pinned_post_ids": []string{},
 		"is_me":           isMe,
 		"follower_count":  followers + remoteFollowers,
 		"following_count": following + remoteFollowing,
@@ -4084,9 +4089,6 @@ func (s *Server) handlePublicProfileByHandle(w http.ResponseWriter, r *http.Requ
 	if isMe {
 		out["email"] = pfl.Email
 		out["display_name_raw"] = strings.TrimSpace(pfl.DisplayName)
-		if pfl.PinnedPostID != nil {
-			out["pinned_post_id"] = pfl.PinnedPostID.String()
-		}
 		if pfl.AvatarObjectKey != nil {
 			out["avatar_object_key"] = *pfl.AvatarObjectKey
 		} else {
@@ -4097,6 +4099,17 @@ func (s *Server) handlePublicProfileByHandle(w http.ResponseWriter, r *http.Requ
 		} else {
 			out["header_object_key"] = ""
 		}
+	}
+	if len(pfl.PinnedPostIDs) > 0 {
+		pinnedIDs := make([]string, 0, len(pfl.PinnedPostIDs))
+		for _, id := range pfl.PinnedPostIDs {
+			pinnedIDs = append(pinnedIDs, id.String())
+		}
+		out["pinned_post_ids"] = pinnedIDs
+		out["pinned_post_id"] = pinnedIDs[0]
+	} else if pfl.PinnedPostID != nil {
+		out["pinned_post_id"] = pfl.PinnedPostID.String()
+		out["pinned_post_ids"] = []string{pfl.PinnedPostID.String()}
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -4380,7 +4393,15 @@ func (s *Server) handleUserPostsByHandle(w http.ResponseWriter, r *http.Request)
 		writeServerError(w, "encodeFeedRows", err)
 		return
 	}
-	if pfl.PinnedPostID != nil {
+	if len(pfl.PinnedPostIDs) > 0 {
+		pinned := map[string]bool{}
+		for _, id := range pfl.PinnedPostIDs {
+			pinned[id.String()] = true
+		}
+		for i := range items {
+			items[i].IsPinnedToProfile = pinned[items[i].ID]
+		}
+	} else if pfl.PinnedPostID != nil {
 		pinnedID := pfl.PinnedPostID.String()
 		for i := range items {
 			items[i].IsPinnedToProfile = items[i].ID == pinnedID

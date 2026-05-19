@@ -17,6 +17,7 @@ import (
 )
 
 const remoteMediaProxyCacheControl = "public, max-age=3600"
+const protectedMediaDownloadBody = "This media is protected by Glipz.\n"
 
 func (s *Server) mediaProxyBaseURL() string {
 	if base := strings.TrimSpace(s.cfg.GlipzProtocolMediaPublicBase); base != "" {
@@ -130,6 +131,49 @@ func writeMediaProxyHeaders(w http.ResponseWriter, meta s3client.ObjectMeta) {
 	if meta.ContentRange != "" {
 		w.Header().Set("Content-Range", meta.ContentRange)
 	}
+}
+
+func sameOriginReferer(r *http.Request) bool {
+	raw := strings.TrimSpace(r.Header.Get("Referer"))
+	if raw == "" {
+		return false
+	}
+	ref, err := url.Parse(raw)
+	if err != nil || ref == nil || strings.TrimSpace(ref.Host) == "" {
+		return false
+	}
+	return strings.EqualFold(ref.Host, r.Host)
+}
+
+func acceptLooksLikeMedia(raw string) bool {
+	raw = strings.ToLower(strings.TrimSpace(raw))
+	return strings.Contains(raw, "image/") || strings.Contains(raw, "video/") || strings.Contains(raw, "audio/")
+}
+
+func publicMediaInlineRequestAllowed(r *http.Request) bool {
+	switch strings.ToLower(strings.TrimSpace(r.Header.Get("Sec-Fetch-Dest"))) {
+	case "image", "video", "audio":
+		return true
+	case "":
+		return sameOriginReferer(r) && (acceptLooksLikeMedia(r.Header.Get("Accept")) || strings.TrimSpace(r.Header.Get("Range")) != "")
+	default:
+		return false
+	}
+}
+
+func writeProtectedMediaDecoy(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="protected-media.txt"`)
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cross-Origin-Resource-Policy", "same-origin")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Accept-Ranges", "none")
+	w.Header().Set("Content-Length", strconv.Itoa(len(protectedMediaDownloadBody)))
+	w.WriteHeader(http.StatusOK)
+	if r.Method == http.MethodHead {
+		return
+	}
+	_, _ = io.WriteString(w, protectedMediaDownloadBody)
 }
 
 func normalizePublicMediaObjectKey(raw string) (string, bool) {
@@ -287,6 +331,10 @@ func (s *Server) handlePublicMediaObject(w http.ResponseWriter, r *http.Request)
 		objectKey = normalized
 	} else {
 		http.NotFound(w, r)
+		return
+	}
+	if !publicMediaInlineRequestAllowed(r) {
+		writeProtectedMediaDecoy(w, r)
 		return
 	}
 	if s.cfg.MediaProxyMode == "direct" {

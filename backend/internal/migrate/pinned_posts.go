@@ -30,12 +30,19 @@ func RunPinnedPosts(ctx context.Context, pool *pgxpool.Pool) error {
 
 	steps := []string{
 		`ALTER TABLE users ADD COLUMN IF NOT EXISTS pinned_post_id UUID`,
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS pinned_post_ids UUID[] NOT NULL DEFAULT '{}'::uuid[]`,
+		`UPDATE users
+			SET pinned_post_ids = ARRAY[pinned_post_id]
+			WHERE pinned_post_id IS NOT NULL
+			  AND cardinality(pinned_post_ids) = 0`,
 		`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pinned_post_id_fkey`,
 		`ALTER TABLE users ADD CONSTRAINT users_pinned_post_id_fkey
 			FOREIGN KEY (pinned_post_id) REFERENCES posts(id) ON DELETE SET NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_users_pinned_post_id
 			ON users (pinned_post_id)
 			WHERE pinned_post_id IS NOT NULL`,
+		`CREATE INDEX IF NOT EXISTS idx_users_pinned_post_ids
+			ON users USING GIN (pinned_post_ids)`,
 	}
 	for i, q := range steps {
 		if _, err := pool.Exec(ctx, q); err != nil {

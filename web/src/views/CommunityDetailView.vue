@@ -947,6 +947,8 @@ onUnmounted(() => {
                   :alt="$t('views.feed.lightboxImageAlt', { n: li + 1 })"
                   class="max-h-[min(88vh,100%)] max-w-full select-none object-contain"
                   draggable="false"
+                  @contextmenu.prevent
+                  @dragstart.prevent
                 />
               </div>
             </div>

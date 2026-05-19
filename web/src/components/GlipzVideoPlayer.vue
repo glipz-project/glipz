@@ -121,8 +121,13 @@ onBeforeUnmount(() => {
         ref="videoRef"
         :src="src"
         class="max-h-[510px] w-full object-contain sm:max-h-[70vh]"
+        controlslist="nodownload noremoteplayback"
+        disablepictureinpicture
+        draggable="false"
         playsinline
         preload="metadata"
+        @contextmenu.prevent
+        @dragstart.prevent
         @click="togglePlay"
         @timeupdate="onTimeUpdate"
         @loadedmetadata="syncFromVideo"

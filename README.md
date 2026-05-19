@@ -46,7 +46,7 @@ Key features include:
 | **Reactions** | Emoji reactions on local and federated posts |
 | **Bookmarks** | Save posts for later |
 | **Visibility** | Public, logged-in-only, followers-only, and private posts |
-| **Profile pins** | Pin one top-level profile post so it stays at the top of the profile timeline |
+| **Profile pins** | Pin up to five top-level profile posts so they stay at the top of the profile timeline |
 
 Home timeline settings let users choose visible timeline tabs, create filtered
 custom timelines, import/export timeline share codes, and tune recommended-sort
@@ -100,7 +100,9 @@ ranking weights for custom timelines.
 ### Media
 
 - Media storage in a local server folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, AWS S3, etc.)
-- Backend media proxy for privacy
+- Backend media proxy for privacy and creator protection; app-embedded media
+  renders inline, while direct download-style requests receive a small decoy
+  attachment instead of the original file
 - Post attachments: images (up to four per post), single video, or single audio; web UI uses custom video/audio players (theme-aware)
 
 ### Fan club (Patreon; optional)
