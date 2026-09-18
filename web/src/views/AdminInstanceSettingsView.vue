@@ -170,7 +170,7 @@ onMounted(() => {
       </button>
     </header>
 
-    <p v-if="err" class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ err }}</p>
+    <p role="alert" v-if="err" class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ err }}</p>
     <p v-if="notice" class="mt-5 rounded-xl border border-lime-200 bg-lime-50 px-4 py-3 text-sm text-lime-800">{{ notice }}</p>
     <p v-if="loading" class="mt-8 text-sm text-neutral-500">{{ $t("app.loading") }}</p>
 

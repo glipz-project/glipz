@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from "../components/ui/EmptyState.vue";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -263,20 +264,12 @@ void loadMe();
     </div>
   </Teleport>
   <PullToRefresh :on-refresh="refreshSearch">
-    <p v-if="err" class="border-b border-neutral-200 px-4 py-3 text-sm text-red-600">{{ err }}</p>
-    <p v-if="busy" class="px-4 py-8 text-center text-sm text-neutral-500">{{ $t("views.search.searching") }}</p>
-    <p v-else-if="!currentQuery" class="px-4 py-16 text-center text-sm text-neutral-500">
-      {{ $t("views.search.enterQuery") }}
-    </p>
-    <p v-else-if="currentTab === 'latest' && !items.length" class="px-4 py-16 text-center text-sm text-neutral-500">
-      {{ $t("views.search.noPosts") }}
-    </p>
-    <p v-else-if="currentTab === 'media' && !mediaItems.length" class="px-4 py-16 text-center text-sm text-neutral-500">
-      {{ $t("views.search.noMedia") }}
-    </p>
-    <p v-else-if="currentTab === 'accounts' && !accounts.length" class="px-4 py-16 text-center text-sm text-neutral-500">
-      {{ $t("views.search.noAccounts") }}
-    </p>
+    <EmptyState v-if="err" :title="err" :action-label="$t('ux.retry')" @action="refreshSearch" />
+    <EmptyState v-else-if="busy" :title="$t('views.search.searching')" busy />
+    <EmptyState v-else-if="!currentQuery" :title="$t('views.search.enterQuery')" />
+    <EmptyState v-else-if="currentTab === 'latest' && !items.length" :title="$t('views.search.noPosts')" />
+    <EmptyState v-else-if="currentTab === 'media' && !mediaItems.length" :title="$t('views.search.noMedia')" />
+    <EmptyState v-else-if="currentTab === 'accounts' && !accounts.length" :title="$t('views.search.noAccounts')" />
     <ul v-else-if="currentTab === 'accounts'" class="divide-y divide-neutral-200">
       <li v-for="account in accounts" :key="account.handle">
         <RouterLink :to="`/@${account.handle}`" class="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-neutral-50">

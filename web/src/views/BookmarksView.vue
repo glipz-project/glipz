@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from "../components/ui/EmptyState.vue";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -232,11 +233,9 @@ onMounted(() => {
     </div>
   </Teleport>
   <PullToRefresh :on-refresh="refreshBookmarks">
-    <p v-if="err" class="border-b border-neutral-200 px-4 py-3 text-sm text-red-600">{{ err }}</p>
-    <p v-if="busy" class="px-4 py-8 text-center text-sm text-neutral-500">{{ $t("app.loading") }}</p>
-    <p v-else-if="!items.length" class="px-4 py-16 text-center text-sm text-neutral-500">
-      {{ $t("views.bookmarks.empty") }}
-    </p>
+    <EmptyState v-if="err" :title="err" :action-label="$t('ux.retry')" @action="refreshBookmarks" />
+    <EmptyState v-else-if="busy" :title="$t('app.loading')" busy />
+    <EmptyState v-else-if="!items.length" :title="$t('views.bookmarks.empty')" />
     <PostTimeline
       v-else
       :items="items"

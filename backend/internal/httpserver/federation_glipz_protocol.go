@@ -1028,6 +1028,12 @@ func (s *Server) handleFederationPostUnlockInbound(w http.ResponseWriter, r *htt
 		writeServerError(w, "PostSensitiveByID federation unlock", err)
 		return
 	}
+	_, viewerHost, viewerErr := splitAcct(req.ViewerAcct)
+	visible, visibilityErr := s.db.CanViewerReadPost(r.Context(), uuid.Nil, postID)
+	if viewerErr != nil || !strings.EqualFold(viewerHost, verified.InstanceHost) || visibilityErr != nil || !visible {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		return
+	}
 	pass := strings.TrimSpace(req.Password)
 	ent := strings.TrimSpace(req.EntitlementJWT)
 	hasPW := row.ViewPasswordHash != nil && strings.TrimSpace(*row.ViewPasswordHash) != ""
@@ -1073,7 +1079,20 @@ func (s *Server) handleFederationPostUnlockInbound(w http.ResponseWriter, r *htt
 	if !s.rememberFederationEventOrFail(w, r, verified, req.EventID) {
 		return
 	}
-	s.writeUnlockedPostJSON(w, row)
+	if s.rdb == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "grant_store_unavailable"})
+		return
+	}
+	ttl := unlockGrantTTL(ent, hasMem)
+	if ttl <= 0 {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_entitlement"})
+		return
+	}
+	if err := s.rdb.Set(r.Context(), remoteMediaGrantKey(req.ViewerAcct, postID), postLockVersion(row), ttl).Err(); err != nil {
+		writeServerError(w, "remote media grant", err)
+		return
+	}
+	s.writeUnlockedPostJSON(w, row, req.ViewerAcct)
 }
 
 type federationEntitlementLockClaims struct {

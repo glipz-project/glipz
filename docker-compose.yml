@@ -2,8 +2,7 @@ services:
   # Development-only compose stack. Bind published ports to localhost so these
   # services are not exposed when testing on a shared network. Do not use this
   # file as-is for production: credentials are fixed for local development.
-  # Before running, copy .env.example to .env and choose GLIPZ_STORAGE_MODE.
-  # Leaving it unset defaults the backend to s3, which requires S3_* values.
+  # Run scripts/start-dev.ps1 to create local settings and start the stack.
   postgres:
     image: postgres:16-alpine
     environment:
@@ -58,6 +57,11 @@ services:
       LEGAL_DOCS_DIR: /app/data/legal-docs
     ports:
       - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     volumes:
       # The backend image runs as uid/gid 10001. If this bind mount already
       # exists on the host, make sure it is writable by 10001:10001.

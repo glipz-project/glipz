@@ -58,7 +58,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-md space-y-6">
+  <div class="ui-auth space-y-6">
     <div>
       <h1 class="text-2xl font-semibold text-neutral-900">{{ $t("auth.verify.title") }}</h1>
       <p class="mt-1 text-sm text-neutral-600">
@@ -73,7 +73,7 @@ onMounted(async () => {
           : 'border-neutral-200 bg-white text-neutral-700'
       "
     >
-      <p>{{ message }}</p>
+      <p role="status">{{ message }}</p>
       <p v-if="loading" class="mt-2 text-neutral-500">{{ $t("auth.verify.wait") }}</p>
       <RouterLink v-else-if="!success" to="/register" class="mt-3 inline-block font-medium text-lime-700 hover:text-lime-800">
         {{ $t("auth.verify.backToRegister") }}

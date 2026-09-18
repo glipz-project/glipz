@@ -30,7 +30,23 @@ type UpsertPushSubscriptionInput struct {
 }
 
 func (p *Pool) UpsertPushSubscription(ctx context.Context, userID uuid.UUID, in UpsertPushSubscriptionInput) error {
-	_, err := p.db.Exec(ctx, `
+	tx, err := p.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	// Serialize per-user registration so concurrent requests cannot bypass the cap.
+	if _, err = tx.Exec(ctx, `SELECT id FROM users WHERE id=$1 FOR UPDATE`, userID); err != nil {
+		return err
+	}
+	var count int
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM user_push_subscriptions WHERE user_id=$1 AND endpoint<>$2`, userID, strings.TrimSpace(in.Endpoint)).Scan(&count); err != nil {
+		return err
+	}
+	if count >= 10 {
+		return ErrForbidden
+	}
+	tag, err := tx.Exec(ctx, `
 		INSERT INTO user_push_subscriptions (
 			user_id, endpoint, p256dh, auth, user_agent, updated_at, failure_reason, last_failure_at
 		)
@@ -43,8 +59,15 @@ func (p *Pool) UpsertPushSubscription(ctx context.Context, userID uuid.UUID, in 
 			updated_at = NOW(),
 			failure_reason = NULL,
 			last_failure_at = NULL
+		WHERE user_push_subscriptions.user_id = EXCLUDED.user_id
 	`, userID, strings.TrimSpace(in.Endpoint), strings.TrimSpace(in.P256DH), strings.TrimSpace(in.Auth), strings.TrimSpace(in.UserAgent))
-	return err
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrForbidden
+	}
+	return tx.Commit(ctx)
 }
 
 func (p *Pool) DeletePushSubscription(ctx context.Context, userID uuid.UUID, endpoint string) error {
@@ -62,6 +85,7 @@ func (p *Pool) ListPushSubscriptionsByUser(ctx context.Context, userID uuid.UUID
 		FROM user_push_subscriptions
 		WHERE user_id = $1
 		ORDER BY updated_at DESC, id DESC
+		LIMIT 10
 	`, userID)
 	if err != nil {
 		return nil, err

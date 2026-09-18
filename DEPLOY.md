@@ -80,8 +80,8 @@ For S3-compatible storage, create a bucket with:
 - **Public access blocked** (Glipz uses the media proxy)
 - **CORS enabled** for your domain
 
-Keep `GLIPZ_MEDIA_PROXY_MODE=proxy` unless your CDN or object-storage public
-endpoint enforces equivalent media safety headers. The backend proxy serves
+Media always uses the backend authorization proxy. Retire existing public
+storage/CDN routes and purge cached copies before upgrading. The proxy serves
 active content types such as SVG, HTML, XML, and JavaScript as downloads with
 `Content-Type: application/octet-stream`, `Content-Disposition: attachment`,
 and `X-Content-Type-Options: nosniff`.
@@ -164,7 +164,7 @@ MAIL_FROM_NAME=Glipz
 | `FRONTEND_ORIGIN` | Your public web app URL |
 | `GLIPZ_PROTOCOL_PUBLIC_ORIGIN` | Public API/federation origin advertised in `/.well-known/glipz-federation`; can be same as frontend if behind the same proxy |
 | `GLIPZ_PROTOCOL_HOST` | Stable federation host peers use to verify discovery and signed request metadata |
-| `GLIPZ_PROTOCOL_MEDIA_PUBLIC_BASE` | Public media base URL used in federated profile and post documents |
+| `GLIPZ_PROTOCOL_MEDIA_PUBLIC_BASE` | Legacy setting; emitted media URLs use the backend authorization proxy |
 | `GLIPZ_FEDERATION_KEY_SEED` | Recommended dedicated base64 32-byte Ed25519 seed for federation signatures; generate with `openssl rand -base64 32` |
 | `GLIPZ_FEDERATION_PRIVATE_KEY` | Advanced alternative: base64 64-byte Ed25519 private key for federation signatures |
 | `GLIPZ_STORAGE_MODE` | `local` stores media on the server; `s3` uses S3-compatible storage |
@@ -227,7 +227,7 @@ web push, and optional fan-club storage. Back up PostgreSQL before deploying a
 new image, and allow the backend to complete migrations before opening the
 instance to traffic.
 
-When using CDN or direct object-storage media URLs, also set the frontend build-time allowlists in `web/.env.production`: `VITE_ALLOWED_MEDIA_BASE_URLS` for rendered media and `VITE_ALLOWED_DM_ATTACHMENT_BASE_URLS` for encrypted DM attachments. Use exact HTTPS path prefixes such as `https://cdn.example.com/media/`; root origins are rejected by the frontend safety checks. Configure the CDN/storage endpoint to reject or download active content types (`image/svg+xml`, `text/html`, XML, and JavaScript types) with `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`.
+Keep object storage private and route media through the backend. The frontend's optional URL allowlists do not provide authorization. Do not configure a public storage/CDN path that bypasses the backend. On upgrades, disable old public routes and invalidate cached media; changes to backend headers cannot revoke existing public copies.
 
 Provider callback URLs use the API public origin, not necessarily the frontend origin. For example, Patreon callbacks should be based on `GLIPZ_PROTOCOL_PUBLIC_ORIGIN`.
 

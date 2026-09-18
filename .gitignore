@@ -20,3 +20,6 @@ backend/server
 web/capacitor.config.ts
 web/android/
 web/ios/
+# Python test-script caches
+__pycache__/
+*.py[cod]

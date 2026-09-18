@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from "../components/ui/PageHeader.vue";
 import { computed, inject, onActivated, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import SettingsBackLink from "../components/SettingsBackLink.vue";
@@ -11,6 +12,7 @@ import {
   type ThemePreference,
 } from "../lib/theme";
 
+const saved = ref(false);
 const { t } = useI18n();
 const setThemePreferenceSilent = inject<(next: ThemePreference) => void>("setThemePreferenceSilent", () => {});
 const setThemeModePreferenceSilent = inject<(next: ThemeModePreference) => void>("setThemeModePreferenceSilent", () => {});
@@ -36,11 +38,13 @@ const selectedThemeDescription = computed(() =>
 );
 
 function selectTheme(next: ThemePreference) {
+  saved.value = true;
   themePreference.value = next;
   setThemePreferenceSilent(next);
 }
 
 function selectThemeMode(next: ThemeModePreference) {
+  saved.value = true;
   themeModePreference.value = next;
   setThemeModePreferenceSilent(next);
 }
@@ -65,10 +69,9 @@ onActivated(syncThemeFromStorage);
 <template>
   <div class="w-full px-4 py-8">
     <SettingsBackLink />
-    <div class="mt-4">
-      <h1 class="text-2xl font-bold text-neutral-900">{{ $t("routes.appearanceSettings") }}</h1>
-    </div>
+    <PageHeader class="mt-4" :title="$t('routes.appearanceSettings')" />
 
+    <p v-if="saved" role="status" class="ui-hint">{{ $t('ux.saved') }}</p>
     <section class="mt-6">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
         {{ $t("views.settings.sections.appearance") }}
@@ -87,7 +90,7 @@ onActivated(syncThemeFromStorage);
             type="button"
             class="rounded-2xl border p-3 text-left transition hover:border-lime-400 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-lime-400/40"
             :class="themePreference === opt.value ? 'border-lime-500 ring-2 ring-lime-500/20' : 'border-neutral-200'"
-            :aria-pressed="themePreference === opt.value"
+            :data-theme-preset="opt.value" :aria-pressed="themePreference === opt.value"
             @click="selectTheme(opt.value)"
           >
             <span class="flex items-start justify-between gap-3">
@@ -131,7 +134,7 @@ onActivated(syncThemeFromStorage);
               type="button"
               class="rounded-xl border p-3 text-left transition hover:border-lime-400 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-lime-400/40"
               :class="themeModePreference === opt.value ? 'border-lime-500 ring-2 ring-lime-500/20' : 'border-neutral-200'"
-              :aria-pressed="themeModePreference === opt.value"
+              :data-theme-mode="opt.value" :aria-pressed="themeModePreference === opt.value"
               @click="selectThemeMode(opt.value)"
             >
               <span class="block text-sm font-semibold text-neutral-900">{{ opt.label }}</span>

@@ -104,6 +104,7 @@ func (c *Client) PutObject(ctx context.Context, objectKey, contentType string, b
 		Body:          body,
 		ContentType:   &contentType,
 		ContentLength: &size,
+		CacheControl:  aws.String("private, no-store"),
 	}
 	_, err := c.internal.PutObject(ctx, in)
 	return err
@@ -111,9 +112,10 @@ func (c *Client) PutObject(ctx context.Context, objectKey, contentType string, b
 
 func (c *Client) PresignPut(ctx context.Context, objectKey, contentType string, ttl time.Duration) (string, error) {
 	out, err := c.presign.PresignPutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &c.bucket,
-		Key:         &objectKey,
-		ContentType: &contentType,
+		Bucket:       &c.bucket,
+		Key:          &objectKey,
+		ContentType:  &contentType,
+		CacheControl: aws.String("private, no-store"),
 	}, s3.WithPresignExpires(ttl))
 	if err != nil {
 		return "", err

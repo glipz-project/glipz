@@ -97,6 +97,6 @@ onActivated(() => {
         </button>
       </div>
     </template>
-    <p v-if="err" class="mt-2 text-xs text-red-600">{{ err }}</p>
+    <p role="alert" v-if="err" class="mt-2 text-xs text-red-600">{{ err }}</p>
   </div>
 </template>

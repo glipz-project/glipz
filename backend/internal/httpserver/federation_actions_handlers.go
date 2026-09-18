@@ -422,10 +422,16 @@ func (s *Server) handleFederatedPostUnlock(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "remote_invalid_response"})
 		return
 	}
-	if err := s.db.UpsertFederatedIncomingUnlock(r.Context(), row.ID, uid, unlocked.Caption, unlocked.MediaType, unlocked.MediaURLs, unlocked.IsNSFW, time.Now().UTC().Add(postUnlockRedisTTL)); err != nil {
+	ttl := unlockGrantTTL(req.EntitlementJWT, strings.TrimSpace(row.MembershipProvider) != "")
+	if ttl <= 0 {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_entitlement"})
+		return
+	}
+	if err := s.db.UpsertFederatedIncomingUnlock(r.Context(), row.ID, uid, unlocked.Caption, unlocked.MediaType, unlocked.MediaURLs, unlocked.IsNSFW, time.Now().UTC().Add(ttl)); err != nil {
 		writeServerError(w, "UpsertFederatedIncomingUnlock", err)
 		return
 	}
+	unlocked.MediaURLs = s.federationRemoteMediaURLs(unlocked.MediaURLs)
 	writeJSON(w, http.StatusOK, unlocked)
 }
 

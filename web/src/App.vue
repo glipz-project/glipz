@@ -276,7 +276,7 @@ const hideMobileChrome = computed(() => route.meta.hideMobileChrome === true);
 const isAdminShell = computed(() => route.meta.adminShell === true);
 const containedMainScroll = computed(() => route.meta.containedMainScroll === true);
 const useViewportScroll = computed(() =>
-  authed.value && !isAdminShell.value && !usesGuestSimpleLayout.value && !wideMain.value && !hideRightAside.value && !containedMainScroll.value
+  authed.value && !isAdminShell.value && !usesGuestSimpleLayout.value && !wideMain.value && !containedMainScroll.value
 );
 const appRootClass = computed(() => {
   if (isAdminShell.value) return "min-h-screen";
@@ -288,13 +288,13 @@ const appRootClass = computed(() => {
       : hideMobileChrome.value && authed.value
         ? "max-lg:pt-[env(safe-area-inset-top,0px)]"
         : "";
-  return [base, topSafe].filter(Boolean).join(" ");
+  return [base, topSafe, usesGuestSimpleLayout.value ? "ui-simple-layout" : ""].filter(Boolean).join(" ");
 });
 const headerContainerClass = computed(() => {
   if (isAdminShell.value) return "max-w-none";
   if (wideMain.value) return "max-w-none";
-  if (!authed.value) return "max-w-[598px]";
-  return "max-w-[min(100%,92rem)]";
+  if (!authed.value) return "max-w-[640px]";
+  return "max-w-[min(100%,80rem)]";
 });
 const shellClass = computed(() => {
   if (isAdminShell.value) return "max-w-none flex-col";
@@ -304,11 +304,11 @@ const shellClass = computed(() => {
       ? "max-w-none flex-row flex-nowrap items-stretch justify-start gap-[20px] overflow-hidden"
       : "max-w-none flex-col py-8";
   }
-  if (!authed.value) return "max-w-[598px] flex-col py-8";
+  if (!authed.value) return "max-w-[640px] flex-col py-8";
   if (useViewportScroll.value) {
-    return "max-w-[min(100%,92rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px]";
+    return "max-w-[min(100%,80rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px]";
   }
-  return "max-w-[min(100%,92rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px] overflow-hidden";
+  return "max-w-[min(100%,80rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px] overflow-hidden";
 });
 const mainFooterNavItems = computed(() => [
   { to: "/feed", label: t("app.nav.home"), icon: "home" as const },
@@ -329,9 +329,9 @@ const mainClass = computed(() => {
   }
   if (!authed.value) return "w-full";
   if (useViewportScroll.value) {
-    return `flex min-h-full min-w-0 max-w-[598px] flex-[0_1_598px] flex-col self-stretch border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
+    return `flex min-h-full min-w-0 max-w-[640px] flex-[0_1_640px] flex-col self-stretch border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
   }
-  return `flex h-full min-h-0 min-w-0 max-w-[598px] flex-[0_1_598px] flex-col overflow-y-auto border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
+  return `flex h-full min-h-0 min-w-0 max-w-[640px] flex-[0_1_640px] flex-col overflow-y-auto border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
 });
 const shellPaddingClass = computed(() =>
   isAdminShell.value ? "px-0" : mobileEdgeToEdge.value ? "px-0 sm:px-[20px]" : "px-[20px]",
@@ -647,10 +647,11 @@ function avatarInitials(email: string): string {
 
 <template>
   <div
-    class="flex flex-col bg-white text-neutral-900"
+    class="ui-app-shell flex flex-col text-neutral-900"
     :class="appRootClass"
     :style="{ '--app-header-offset': appHeaderOffset }"
   >
+    <a href="#main-content" class="ui-skip-link">{{ $t('ux.skipContent') }}</a>
     <div
       v-if="notifyToastMessageText"
       class="fixed right-4 z-[200] max-w-sm rounded-xl border border-lime-200 bg-white px-4 py-3 text-sm text-neutral-900 shadow-lg ring-1 ring-black/5 max-lg:top-[calc(1rem+env(safe-area-inset-top,0px))] lg:top-4"
@@ -665,7 +666,7 @@ function avatarInitials(email: string): string {
       :class="hideMobileChrome ? 'max-lg:hidden' : ''"
     >
       <div
-        class="mx-auto w-full px-[20px]"
+        class="ui-header-inner mx-auto w-full px-[20px]"
         :class="headerContainerClass"
       >
         <div
@@ -677,7 +678,7 @@ function avatarInitials(email: string): string {
           >
             <button
               type="button"
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 hover:bg-neutral-50 lg:hidden"
+              class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 hover:bg-neutral-50 lg:hidden"
               :aria-label="mobileNavOpen ? $t('app.menu.close') : $t('app.menu.open')"
               :aria-expanded="mobileNavOpen"
               aria-controls="app-sidebar"
@@ -686,6 +687,10 @@ function avatarInitials(email: string): string {
               <Icon v-if="!mobileNavOpen" name="menu" class="h-5 w-5" />
               <Icon v-else name="close" class="h-5 w-5" />
             </button>
+            <div v-if="isSearchRoute" class="hidden w-full lg:block xl:hidden">
+              <label class="sr-only" for="global-search-tablet">{{ $t('app.search.label') }}</label>
+              <input id="global-search-tablet" v-model="searchQuery" type="search" class="ui-input" :placeholder="$t('app.search.placeholder')" @keydown.enter.prevent="onGlobalSearchEnter" />
+            </div>
           </div>
           <div class="min-w-0 lg:hidden">
             <div v-if="isSearchRoute" class="mx-auto w-full max-w-[min(100%,22rem)]">
@@ -710,15 +715,15 @@ function avatarInitials(email: string): string {
             <div v-else class="h-8" aria-hidden="true" />
           </div>
           <div
-            class="hidden min-h-0 min-w-0 max-w-[598px] shrink-0 self-end flex-[0_1_598px] lg:block"
+            class="hidden min-h-0 min-w-0 max-w-[640px] shrink-0 self-end flex-[0_1_640px] lg:block"
           >
             <div id="app-view-header-slot-desktop" class="min-h-0" />
           </div>
           <div class="h-10 w-10 shrink-0 lg:hidden" aria-hidden="true" />
           <div
-            class="hidden min-h-0 w-[350px] shrink-0 flex-col justify-center lg:flex lg:pb-3"
+            class="hidden min-h-0 w-[320px] shrink-0 flex-col justify-center xl:flex lg:pb-3"
           >
-            <div class="w-full min-w-0 max-w-[350px]">
+            <div class="w-full min-w-0 max-w-[320px]">
               <label class="sr-only" for="global-search">{{ $t("app.search.label") }}</label>
               <input
                 id="global-search"
@@ -741,7 +746,7 @@ function avatarInitials(email: string): string {
           >
             <img :src="logoImg" alt="Glipz" class="h-8 w-auto max-h-9 object-contain object-left" />
           </RouterLink>
-          <div class="order-3 w-full min-w-0 sm:order-2 sm:mx-auto sm:max-w-[min(100%,350px)] sm:flex-1">
+          <div class="order-3 w-full min-w-0 sm:order-2 sm:mx-auto sm:max-w-[min(100%,320px)] sm:flex-1">
             <label class="sr-only" for="global-search-guest">{{ $t("app.search.label") }}</label>
             <input
               id="global-search-guest"
@@ -767,12 +772,12 @@ function avatarInitials(email: string): string {
           class="flex w-full items-start justify-center gap-[20px] lg:hidden"
         >
           <div class="hidden min-h-0 min-w-0 w-60 shrink-0 lg:block" aria-hidden="true" />
-          <div class="min-w-0 w-full max-w-[598px] flex-[0_1_598px]">
-            <div id="app-view-header-slot-mobile" class="min-h-0" />
+          <div class="min-w-0 w-full max-w-[640px] flex-[0_1_640px]">
+            <div id="app-view-header-slot-mobile" class="min-h-0" :class="!isSearchRoute ? 'ui-mobile-page-title' : ''" />
           </div>
           <div
             v-if="!hideRightAside"
-            class="hidden min-h-0 min-w-0 w-[350px] shrink-0 lg:block"
+            class="hidden min-h-0 min-w-0 w-[320px] shrink-0 xl:block"
             aria-hidden="true"
           />
         </div>
@@ -794,7 +799,7 @@ function avatarInitials(email: string): string {
         id="app-sidebar"
         class="flex min-h-0 w-60 max-w-[min(100vw-2rem,16rem)] shrink-0 flex-col self-stretch bg-white px-3 py-6 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:top-[var(--app-header-offset,56px)] max-lg:z-40 max-lg:overflow-y-auto max-lg:transition-transform max-lg:duration-200 max-lg:ease-out"
         :class="[
-          mobileNavOpen ? 'max-lg:translate-x-0 max-lg:shadow-xl max-lg:ring-1 max-lg:ring-black/5' : 'max-lg:-translate-x-full',
+          mobileNavOpen ? 'max-lg:translate-x-0 max-lg:shadow-xl max-lg:ring-1 max-lg:ring-black/5' : 'max-lg:-translate-x-full max-lg:invisible',
           useViewportScroll
             ? 'lg:sticky lg:self-start lg:overflow-visible lg:translate-x-0'
             : 'lg:relative lg:inset-auto lg:z-auto lg:h-auto lg:max-h-none lg:overflow-visible lg:translate-x-0',
@@ -991,7 +996,7 @@ function avatarInitials(email: string): string {
           </div>
         </div>
       </aside>
-      <main
+      <main id="main-content" tabindex="-1"
         class="min-w-0"
         :class="mainClass"
       >
@@ -1010,7 +1015,7 @@ function avatarInitials(email: string): string {
       />
       <aside
         v-if="authed && !usesGuestSimpleLayout && !isAdminShell && !hideRightAside"
-        class="hidden min-h-0 w-[350px] shrink-0 flex-col gap-6 overflow-y-auto bg-white px-3 py-6 lg:flex"
+        class="hidden min-h-0 w-[320px] shrink-0 flex-col gap-6 overflow-y-auto bg-white px-3 py-6 xl:flex"
         :class="useViewportScroll ? 'lg:sticky lg:self-start' : ''"
         :style="useViewportScroll ? { top: appHeaderOffset, maxHeight: `calc(100dvh - ${appHeaderOffset})` } : undefined"
         :aria-label="$t('app.menu.announcementsAndPolicies')"

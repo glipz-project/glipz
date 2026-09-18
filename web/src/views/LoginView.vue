@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import Button from "../components/ui/Button.vue";
+import FormField from "../components/ui/FormField.vue";
+import PasswordInput from "../components/ui/PasswordInput.vue";
+import Alert from "../components/ui/Alert.vue";
+import PageHeader from "../components/ui/PageHeader.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -35,7 +40,7 @@ async function submit() {
     await router.push(next);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "";
-    err.value = msg === "account_suspended" ? t("auth.login.suspended") : msg || t("auth.login.failed");
+    err.value = msg === "account_suspended" ? t("auth.login.suspended") : t("auth.login.failed");
   } finally {
     loading.value = false;
   }
@@ -43,49 +48,19 @@ async function submit() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-md space-y-6">
+  <div class="ui-auth space-y-6">
     <AuthLogo />
-    <div>
-      <h1 class="text-2xl font-semibold text-neutral-900">{{ $t("auth.login.title") }}</h1>
-      <p class="mt-1 text-sm text-neutral-600">
-        {{ $t("auth.login.description") }}
-      </p>
-    </div>
-    <form class="space-y-4" @submit.prevent="submit">
-      <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.login.email") }}</label>
-        <input
-          v-model="email"
-          type="email"
-          required
-          autocomplete="username"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
-        />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.login.password") }}</label>
-        <input
-          v-model="password"
-          type="password"
-          required
-          autocomplete="current-password"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
-        />
-      </div>
-      <p v-if="err" class="text-sm text-red-600">{{ err }}</p>
-      <button
-        type="submit"
-        class="w-full rounded-md bg-lime-500 py-2 font-medium text-white hover:bg-lime-600 disabled:opacity-50"
-        :disabled="loading"
-      >
-        {{ $t("auth.login.submit") }}
-      </button>
+    <PageHeader :title="$t('auth.login.title')" :description="$t('auth.login.description')" />
+    <form @submit.prevent="submit" :aria-busy="loading">
+      <FormField id="login-email" :label="$t('auth.login.email')" required v-slot="field">
+        <input v-model="email" :id="field.id" class="ui-input" type="email" required autocomplete="username" :aria-describedby="err ? 'login-error' : undefined" />
+      </FormField>
+      <FormField id="login-password" :label="$t('auth.login.password')" required v-slot="field">
+        <PasswordInput v-model="password" :id="field.id" required autocomplete="current-password" :aria-describedby="err ? 'login-error' : undefined" />
+      </FormField>
+      <Alert v-if="err" id="login-error" tone="error">{{ err }}</Alert>
+      <Button type="submit" :loading="loading" class="w-full">{{ $t(loading ? 'ux.working' : 'auth.login.submit') }}</Button>
     </form>
-    <p class="text-center text-sm text-neutral-600">
-      {{ $t("auth.login.firstTime") }}
-      <RouterLink to="/register" class="font-medium text-lime-700 hover:text-lime-800">
-        {{ $t("auth.login.createAccount") }}
-      </RouterLink>
-    </p>
+    <p class="text-center ui-hint">{{ $t('auth.login.firstTime') }} <RouterLink to="/register" class="font-semibold text-lime-700">{{ $t('auth.login.createAccount') }}</RouterLink></p>
   </div>
 </template>

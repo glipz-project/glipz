@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from "../components/ui/EmptyState.vue";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { RouterLink, useRoute, useRouter } from "vue-router";
@@ -194,13 +195,9 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <div v-if="err" class="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-    {{ $t("views.communities.loadFailed") }}
-  </div>
-  <div v-else-if="busy" class="p-6 text-sm text-neutral-500">{{ $t("app.loading") }}</div>
-  <div v-else-if="communities.length === 0" class="p-6 text-sm text-neutral-500">
-    {{ isSearching ? $t("views.communities.emptySearch") : $t("views.communities.empty") }}
-  </div>
+  <EmptyState v-if="err" :title="$t('views.communities.loadFailed')" :action-label="$t('ux.retry')" @action="load" />
+  <EmptyState v-else-if="busy" :title="$t('app.loading')" busy />
+  <EmptyState v-else-if="communities.length === 0" :title="isSearching ? $t('views.communities.emptySearch') : $t('views.communities.empty')" />
   <div v-else class="divide-y divide-neutral-200">
     <RouterLink
       v-for="community in communities"

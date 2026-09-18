@@ -105,6 +105,26 @@ func (s *Server) acquireSSEConnection(w http.ResponseWriter, r *http.Request, us
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), sseMaxConnectionAge)
+	if raw, _, ok := extractAccessCredential(r); ok && userID != nil {
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					checkCtx, stop := context.WithTimeout(ctx, 2*time.Second)
+					_, _, valid := s.principalForAccess(checkCtx, raw)
+					stop()
+					if !valid {
+						cancel()
+						return
+					}
+				}
+			}
+		}()
+	}
 	release := func() {
 		cancel()
 		s.releaseSharedSSESlots(context.Background(), sharedKeys)

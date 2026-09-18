@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 
 func newPublicOutboundHTTPClient(timeout time.Duration) *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
 	transport.DialContext = publicOutboundDialContext
 	return &http.Client{
 		Timeout:   timeout,
@@ -81,6 +83,16 @@ func ensurePublicOutboundHost(ctx context.Context, host string) error {
 func isPublicOutboundIP(ip net.IP) bool {
 	if ip == nil {
 		return false
+	}
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return false
+	}
+	addr = addr.Unmap()
+	for _, raw := range []string{"0.0.0.0/8", "100.64.0.0/10", "192.0.0.0/24", "192.0.2.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4", "::/96", "64:ff9b::/96", "64:ff9b:1::/48", "100::/64", "2001::/32", "2001:db8::/32", "2002::/16"} {
+		if netip.MustParsePrefix(raw).Contains(addr) {
+			return false
+		}
 	}
 	return !(ip.IsLoopback() ||
 		ip.IsPrivate() ||

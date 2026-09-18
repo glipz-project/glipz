@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"glipz.io/backend/internal/authjwt"
 	"glipz.io/backend/internal/mailer"
 	"glipz.io/backend/internal/repo"
 )
@@ -162,7 +161,7 @@ func (s *Server) handleRegisterVerify(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	tok, err := authjwt.SignAccess(s.secret, userID, 24*time.Hour)
+	tok, err := s.issueAccessToken(r.Context(), userID, 24*time.Hour)
 	if err != nil {
 		writeServerError(w, "register verify SignAccess", err)
 		return

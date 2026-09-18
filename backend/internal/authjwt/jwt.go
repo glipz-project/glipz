@@ -32,6 +32,7 @@ func SignAccess(secret []byte, userID uuid.UUID, ttl time.Duration) (string, err
 		TokenUse: TokenUseUser,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userID.String(),
+			ID:        uuid.NewString(),
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
 			Issuer:    Issuer,
@@ -83,7 +84,7 @@ func Parse(secret []byte, token string) (*Claims, error) {
 			return nil, errors.New("unexpected signing method")
 		}
 		return secret, nil
-	}, jwt.WithIssuer(Issuer), jwt.WithAudience(AudienceAPI))
+	}, jwt.WithIssuer(Issuer), jwt.WithAudience(AudienceAPI), jwt.WithExpirationRequired())
 	if err != nil {
 		return nil, err
 	}

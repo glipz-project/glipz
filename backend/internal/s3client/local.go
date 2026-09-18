@@ -79,7 +79,7 @@ func (c *LocalClient) PutObject(ctx context.Context, objectKey, contentType stri
 	return c.writeMeta(objectKey, localObjectMeta{
 		ContentType:  normalizeContentType(contentType, objectKey),
 		SizeBytes:    size,
-		CacheControl: "public, max-age=31536000, immutable",
+		CacheControl: "private, no-store",
 	})
 }
 
@@ -256,7 +256,7 @@ func (c *LocalClient) readMeta(objectKey string, st os.FileInfo) localObjectMeta
 	meta := localObjectMeta{
 		ContentType:  normalizeContentType("", objectKey),
 		SizeBytes:    st.Size(),
-		CacheControl: "public, max-age=31536000, immutable",
+		CacheControl: "private, no-store",
 	}
 	p, err := c.metaPath(objectKey)
 	if err != nil {

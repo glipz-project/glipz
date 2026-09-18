@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from "../components/ui/EmptyState.vue";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -422,8 +423,8 @@ onMounted(() => {
       </a>
     </div>
 
-    <p v-if="loading" class="border-b border-neutral-200 px-4 py-12 text-center text-sm text-neutral-500">{{ t("app.loading") }}</p>
-    <p v-else-if="err" class="border-b border-neutral-200 px-4 py-8 text-center text-sm text-red-600">{{ err }}</p>
+    <EmptyState v-if="loading" :title="t('app.loading')" busy />
+    <EmptyState v-else-if="err" :title="err" :action-label="$t('ux.retry')" @action="loadPost" />
 
     <PostTimeline
       v-else-if="item"

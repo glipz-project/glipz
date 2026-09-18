@@ -10,6 +10,8 @@ const { to: backTo, label: backLabel, onClick: backOnClick } = useBackLink({ fal
 
 const scalarConfiguration = {
   url: "/openapi.yaml",
+  withDefaultFonts: false,
+  agent: { disabled: true },
 };
 </script>
 

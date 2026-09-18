@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from "../components/ui/PageHeader.vue";
 import AccountDeletionSettings from "../components/AccountDeletionSettings.vue";
 import SettingsBackLink from "../components/SettingsBackLink.vue";
 </script>
@@ -6,9 +7,7 @@ import SettingsBackLink from "../components/SettingsBackLink.vue";
 <template>
   <div class="w-full px-4 py-8">
     <SettingsBackLink />
-    <div class="mt-4">
-      <h1 class="text-2xl font-bold text-neutral-900">{{ $t("routes.accountDeletionSettings") }}</h1>
-    </div>
+    <PageHeader class="mt-4" :title="$t('routes.accountDeletionSettings')" />
     <div class="mt-6">
       <AccountDeletionSettings />
     </div>

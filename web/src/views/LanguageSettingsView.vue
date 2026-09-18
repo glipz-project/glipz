@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import PageHeader from "../components/ui/PageHeader.vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import SettingsBackLink from "../components/SettingsBackLink.vue";
 import { setLocale, supportedLocaleOptions, type AppLocale } from "../i18n";
 
+const saved = ref(false);
 const { t, locale } = useI18n();
 
 const localeOptions = computed(() =>
@@ -14,6 +16,7 @@ const localeOptions = computed(() =>
 );
 
 function selectLocale(next: AppLocale) {
+  saved.value = true;
   setLocale(next);
 }
 </script>
@@ -21,10 +24,9 @@ function selectLocale(next: AppLocale) {
 <template>
   <div class="w-full px-4 py-8">
     <SettingsBackLink />
-    <div class="mt-4">
-      <h1 class="text-2xl font-bold text-neutral-900">{{ $t("routes.languageSettings") }}</h1>
-    </div>
+    <PageHeader class="mt-4" :title="$t('routes.languageSettings')" />
 
+    <p v-if="saved" role="status" class="ui-hint">{{ $t('ux.saved') }}</p>
     <section class="mt-6">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
         {{ $t("app.locale.heading") }}

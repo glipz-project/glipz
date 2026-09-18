@@ -29,7 +29,7 @@ Key features include:
 - **SNS operators** who want to launch a community-focused social network without depending on a centralized platform
 - **Creators and fan communities** that need optional gated posts and memberships
 - **Developers** who want a modern Go/Vue social app with REST APIs, OAuth, PATs, and federation hooks
-- **Independent operators** who want to run a single-server instance with local media storage or scale out with S3-compatible storage/CDN delivery
+- **Independent operators** who want local media storage or private S3-compatible storage behind the media authorization proxy
 
 ---
 
@@ -100,9 +100,8 @@ ranking weights for custom timelines.
 ### Media
 
 - Media storage in a local server folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, AWS S3, etc.)
-- Backend media proxy for privacy and creator protection; app-embedded media
-  renders inline, while direct download-style requests receive a small decoy
-  attachment instead of the original file
+- Backend media proxy checks post visibility, unlock grants, and DM participants
+  before serving GET, HEAD, or Range requests; unknown uploads are owner-only
 - Post attachments: images (up to four per post), single video, or single audio; web UI uses custom video/audio players (theme-aware)
 
 ### Fan club (Patreon; optional)
@@ -153,13 +152,13 @@ ranking weights for custom timelines.
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | Go 1.26.2, Chi router, pgx, Redis |
+| **Backend** | Go 1.26.8, Chi router, pgx, Redis |
 | **Frontend** | Vue 3, TypeScript, Vite, Tailwind CSS, vue-i18n (ja / en / zh / ko / ru / es / pt) |
 | **Database** | PostgreSQL 16 |
 | **Cache** | Redis 7 |
 | **Storage** | Local server folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, etc.) |
 | **Mobile (optional)** | Capacitor 7 (Android / iOS) |
-| **Deployment** | Docker, Docker Compose (image builds Node 22 + Go 1.26.2) |
+| **Deployment** | Docker, Docker Compose (image builds Node 22 + Go 1.26.8) |
 
 ---
 
@@ -169,7 +168,7 @@ ranking weights for custom timelines.
 
 - Docker & Docker Compose
 - Node.js 22+ (for frontend development; matches `web/package.json` engines)
-- Go 1.26.2+ (optional, for backend development outside Docker)
+- Go 1.26.8+ (optional, for backend development outside Docker)
 - Media storage: either a server-local folder or an S3-compatible bucket
 
 ### 1. Clone and configure
@@ -206,7 +205,7 @@ S3_USE_PATH_STYLE=true-or-false-for-your-provider
 
 In local mode, the backend stores uploaded files on disk and serves them from `/api/v1/media/object/*`. With Docker Compose, `./data/media` is mounted into the backend container so uploads survive container rebuilds.
 
-Cloudflare R2 uses `S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com`, `S3_REGION=auto`, and path-style access. For direct media delivery, set `GLIPZ_PROTOCOL_MEDIA_PUBLIC_BASE` to your R2 custom public domain and use `GLIPZ_MEDIA_PROXY_MODE=direct`. Direct media endpoints must reject or download active content types such as SVG, HTML, XML, and JavaScript with `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`; the backend proxy applies this automatically.
+Cloudflare R2 uses `S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com`, `S3_REGION=auto`, and path-style access. Keep the bucket private. Media is always served through the authorization proxy; legacy direct/public-base settings do not bypass it. Retire existing public bucket/CDN routes and purge their caches when upgrading.
 
 Before enabling public federation, generate dedicated signing key material with
 `openssl rand -base64 32` and set `GLIPZ_FEDERATION_KEY_SEED`. Without it, Glipz
@@ -473,7 +472,7 @@ Membership entitlement over Glipz federation (`POST .../federation/posts/{postID
 | `FRONTEND_ORIGIN` | Frontend origin(s) for CORS; comma-separated if apex + www | Recommended |
 | `GLIPZ_PROTOCOL_PUBLIC_ORIGIN` | Public API/federation origin advertised in discovery; falls back to `FRONTEND_ORIGIN` when empty | Recommended for federation |
 | `GLIPZ_PROTOCOL_HOST` | Stable federation host advertised to peers | Recommended for federation |
-| `GLIPZ_PROTOCOL_MEDIA_PUBLIC_BASE` | Public base URL for federated media URLs | Recommended for federation |
+| `GLIPZ_PROTOCOL_MEDIA_PUBLIC_BASE` | Legacy setting; generated media URLs use the backend authorization proxy | Optional |
 | `GLIPZ_FEDERATION_KEY_SEED` / `GLIPZ_FEDERATION_PRIVATE_KEY` | Dedicated Ed25519 federation signing key material; avoids tying federation identity to JWT rotation | Recommended for public federation |
 | `GLIPZ_METRICS_ENABLED` | Exposes lightweight expvar metrics at `/debug/vars` | Optional |
 | `GLIPZ_ACCESS_LOG_ENABLED` | Enables per-request access logs; disabled by default for throughput | Optional |
@@ -481,7 +480,7 @@ Membership entitlement over Glipz federation (`POST .../federation/posts/{postID
 | `GLIPZ_TRUST_PROXY_HEADERS` | Trusts reverse-proxy client IP / scheme headers; enable only behind a proxy that overwrites them | Optional |
 | `GLIPZ_AUTH_RATE_LIMIT_FAIL_CLOSED` | Rejects login/MFA attempts when Redis-backed auth/SSE rate limit checks fail | Optional |
 | `GLIPZ_FEED_PAGE_SIZE` | Authenticated feed items returned per request; lower values reduce payload size under load | Optional |
-| `GLIPZ_MEDIA_PROXY_MODE` | `proxy` streams media through the API and applies media safety headers; `direct` redirects safe media to configured public media URLs | Optional |
+| `GLIPZ_MEDIA_PROXY_MODE` | Legacy setting; media always uses the authorization proxy | Optional |
 | `GLIPZ_REMOTE_MEDIA_PROXY_MAX_BYTES` | Maximum bytes streamed by the public remote-media proxy; default is 50 MiB | Optional |
 | `GLIPZ_REMOTE_MEDIA_PROXY_RATE_LIMIT_MAX` | Public remote-media proxy requests allowed per IP per 15 minutes; default is 120 | Optional |
 | `GLIPZ_REMOTE_MEDIA_PROXY_RATE_LIMIT_FAIL_CLOSED` | Rejects remote-media proxy requests when Redis-backed rate limit writes fail | Optional |

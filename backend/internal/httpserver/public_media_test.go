@@ -72,7 +72,7 @@ func TestHandlePublicMediaObjectRejectsUnmanagedObjectKeys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := &Server{s3: store}
+	s := &Server{s3: store, mediaAccess: &testMediaStore{public: true}}
 	r := chi.NewRouter()
 	r.Get("/media/object/*", s.handlePublicMediaObject)
 	r.Head("/media/object/*", s.handlePublicMediaObject)
@@ -117,12 +117,12 @@ func TestHandlePublicMediaObjectRejectsUnmanagedObjectKeys(t *testing.T) {
 	}
 }
 
-func TestHandlePublicMediaObjectReturnsDecoyForDirectDownloads(t *testing.T) {
+func TestAuthorizedPublicMediaDoesNotDependOnFetchHeaders(t *testing.T) {
 	store, err := s3client.NewLocal(t.TempDir(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := &Server{s3: store}
+	s := &Server{s3: store, mediaAccess: &testMediaStore{public: true}}
 	r := chi.NewRouter()
 	r.Get("/media/object/*", s.handlePublicMediaObject)
 	r.Head("/media/object/*", s.handlePublicMediaObject)
@@ -140,11 +140,8 @@ func TestHandlePublicMediaObjectReturnsDecoyForDirectDownloads(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET direct status = %d, want 200", rec.Code)
 	}
-	if got := rec.Header().Get("Content-Disposition"); !strings.Contains(got, "protected-media.txt") {
-		t.Fatalf("Content-Disposition = %q, want protected-media attachment", got)
-	}
-	if got := rec.Body.String(); got != protectedMediaDownloadBody {
-		t.Fatalf("direct body = %q, want decoy", got)
+	if got := rec.Body.String(); got != "actual image bytes" {
+		t.Fatalf("public media body = %q", got)
 	}
 
 	rec = httptest.NewRecorder()

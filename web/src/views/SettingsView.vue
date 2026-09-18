@@ -17,198 +17,27 @@ const profilePath = computed(() => (appMe?.value?.handle ? `/@${appMe.value.hand
 const showAdmin = computed(() => Boolean(appMe?.value?.is_site_admin));
 const showFanclubPatreon = computed(() => Boolean(appMe?.value?.fanclub_patreon_enabled));
 const showFanclub = computed(() => showFanclubPatreon.value);
+
+const groups = computed(() => [
+  { title:'ux.profile', items:[{to:profilePath.value,label:'profileEdit'}] },
+  { title:'ux.display', items:[{to:'/settings/appearance',label:'appearanceSettings'},{to:'/settings/language',label:'languageSettings'}] },
+  { title:'ux.posts', items:[{to:'/settings/timeline',label:'timelineSettings'},{to:'/feed/scheduled',label:'scheduledPosts'},{to:'/bookmarks',label:'bookmarks'},{to:'/settings/custom-emojis',label:'customEmojis'}] },
+  { title:'ux.communication', items:[{to:'/settings/notifications',label:'notificationSettings'},{to:'/settings/direct-messages',label:'directMessageSettings'}] },
+  { title:'ux.security', items:[{to:'/settings/mfa',label:'mfaSettings'},{to:'/settings/identity-portability',label:'identityPortability'}] },
+  { title:'ux.integrations', items:[{to:'/settings/plugins',label:'pluginSettings'},{to:'/developer/api',label:'apiDeveloper'},{to:'/legal/api-guidelines',label:'apiReferencePublic'}] },
+]);
 </script>
-
 <template>
-  <Teleport to="#app-view-header-slot-desktop">
-    <div class="flex h-14 items-center gap-3">
-      <h1 class="truncate text-lg font-bold">{{ $t("views.settings.title") }}</h1>
-    </div>
-  </Teleport>
-  <Teleport to="#app-view-header-slot-mobile">
-    <div class="px-4 py-4">
-      <h1 class="text-xl font-bold">{{ $t("views.settings.title") }}</h1>
-      <p class="mt-1 text-sm text-neutral-600">{{ $t("views.settings.lead") }}</p>
-    </div>
-  </Teleport>
-
-  <div class="w-full px-4 py-8">
-    <div class="space-y-10">
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.account") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            :to="profilePath"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.profileEdit") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/bookmarks"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.bookmarks") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/custom-emojis"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.customEmojis") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/timeline"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.timelineSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/plugins"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.pluginSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/mfa"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.mfaSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/identity-portability"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.identityPortability") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/account-deletion"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-red-700 transition-colors hover:bg-red-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.accountDeletion") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-red-300" decorative />
-          </RouterLink>
-        </div>
-        <p class="mt-2 text-xs text-neutral-500">{{ $t("views.settings.hints.account") }}</p>
-      </section>
-
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.posts") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/feed/scheduled"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.scheduledPosts") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-
-      <section v-if="showFanclub">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.fanclub") }}
-        </h2>
-        <FanclubPatreonSettings v-if="showFanclubPatreon" />
-      </section>
-
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.communication") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/settings/direct-messages"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.directMessageSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/settings/notifications"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.notificationSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.developer") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/developer/api"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.apiDeveloper") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-          <RouterLink
-            to="/legal/api-guidelines"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.apiReferencePublic") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.appearance") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/settings/appearance"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.appearanceSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-
-      <section>
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.language") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/settings/language"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.languageSettings") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-
-      <section v-if="showAdmin">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          {{ $t("views.settings.sections.admin") }}
-        </h2>
-        <div class="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <RouterLink
-            to="/admin"
-            class="flex items-center justify-between gap-3 px-4 py-3.5 text-sm text-neutral-900 transition-colors hover:bg-lime-50"
-          >
-            <span class="font-medium">{{ $t("views.settings.items.adminControlPanel") }}</span>
-            <Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" decorative />
-          </RouterLink>
-        </div>
-      </section>
-    </div>
+  <Teleport to="#app-view-header-slot-desktop"><h1 class="flex min-h-14 items-center text-lg font-bold">{{ $t('views.settings.title') }}</h1></Teleport>
+  <Teleport to="#app-view-header-slot-mobile"><h1 class="px-4 py-3 text-xl font-bold">{{ $t('views.settings.title') }}</h1></Teleport>
+  <div class="w-full px-4 py-6 space-y-8">
+    <p class="ui-hint">{{ $t('views.settings.lead') }}</p>
+    <section v-for="group in groups" :key="group.title">
+      <h2 class="mb-3 text-base font-semibold">{{ $t(group.title) }}</h2>
+      <div class="ui-settings-group"><RouterLink v-for="item in group.items" :key="item.to" :to="item.to" class="ui-settings-row"><span>{{ $t('views.settings.items.' + item.label) }}</span><Icon name="chevronDown" class="h-4 w-4 shrink-0 -rotate-90" decorative /></RouterLink></div>
+    </section>
+    <section v-if="showFanclub"><h2 class="mb-3 text-base font-semibold">{{ $t('views.settings.sections.fanclub') }}</h2><FanclubPatreonSettings v-if="showFanclubPatreon" /></section>
+    <section v-if="showAdmin"><h2 class="mb-3 text-base font-semibold">{{ $t('views.settings.sections.admin') }}</h2><div class="ui-settings-group"><RouterLink to="/admin" class="ui-settings-row">{{ $t('views.settings.items.adminControlPanel') }}<Icon name="chevronDown" class="h-4 w-4 -rotate-90" decorative /></RouterLink></div></section>
+    <section><h2 class="mb-3 text-base font-semibold">{{ $t('ux.danger') }}</h2><div class="ui-settings-group ui-danger-zone"><RouterLink to="/settings/account-deletion" class="ui-settings-row">{{ $t('views.settings.items.accountDeletion') }}<Icon name="chevronDown" class="h-4 w-4 -rotate-90" decorative /></RouterLink></div></section>
   </div>
 </template>

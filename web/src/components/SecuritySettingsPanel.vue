@@ -190,7 +190,7 @@ const webPushSubscribedLabel = computed(() =>
       </div>
     </section>
 
-    <p v-if="msg" class="text-sm font-medium text-lime-700">{{ msg }}</p>
-    <p v-if="err" class="text-sm text-red-600">{{ err }}</p>
+    <p role="status" v-if="msg" class="text-sm font-medium text-lime-700">{{ msg }}</p>
+    <p role="alert" v-if="err" class="text-sm text-red-600">{{ err }}</p>
   </div>
 </template>

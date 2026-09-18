@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageHeader from "../components/ui/PageHeader.vue";
 import { provide } from "vue";
 import DMSettingsPanel from "../components/DMSettingsPanel.vue";
 import SettingsBackLink from "../components/SettingsBackLink.vue";
@@ -10,9 +11,7 @@ provide(securitySettingsKey, useSecuritySettings());
 <template>
   <div class="w-full px-4 py-8">
     <SettingsBackLink />
-    <div class="mt-4">
-      <h1 class="text-2xl font-bold text-neutral-900">{{ $t("routes.directMessageSettings") }}</h1>
-    </div>
+    <PageHeader class="mt-4" :title="$t('routes.directMessageSettings')" />
     <div class="mt-6">
       <DMSettingsPanel />
     </div>

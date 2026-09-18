@@ -1,0 +1,46 @@
+name: Security checks
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go test -race ./...
+        working-directory: backend
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+        working-directory: backend
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - run: npm test && npm run typecheck && npm run build && npm audit
+        working-directory: web
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend/Dockerfile -t glipz-security-check .
+      - uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: glipz-security-check
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Dialog from "./ui/Dialog.vue";
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { TimelinePost } from "../types/timeline";
@@ -71,28 +72,7 @@ function submitWithComment() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      v-if="open && post"
-      class="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="repost-modal-title"
-    >
-      <div
-        class="absolute inset-0 bg-black/50"
-        aria-hidden="true"
-        :class="props.submitting ? 'pointer-events-none' : ''"
-        @click="close"
-      />
-      <div
-        class="relative z-10 w-full max-w-md rounded-t-2xl border border-neutral-200 bg-white shadow-xl sm:rounded-2xl"
-      >
-        <div class="border-b border-neutral-200 px-4 py-3">
-          <h2 id="repost-modal-title" class="text-base font-semibold text-neutral-900">{{ $t("components.repostModal.title") }}</h2>
-          <p class="mt-1 line-clamp-3 text-sm text-neutral-600">{{ previewCaption(post) }}</p>
-        </div>
-
+  <Dialog :open="open && !!post" :title="$t('components.repostModal.title')" :description="post ? previewCaption(post) : ''" @update:open="close">
         <div v-if="step === 'choose'" class="flex flex-col gap-2 px-4 py-4">
           <p class="text-sm text-neutral-600">{{ $t("components.repostModal.description") }}</p>
           <button
@@ -161,7 +141,5 @@ function submitWithComment() {
             {{ $t("components.repostModal.cancel") }}
           </button>
         </div>
-      </div>
-    </div>
-  </Teleport>
+  </Dialog>
 </template>

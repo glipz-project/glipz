@@ -33,7 +33,7 @@ export function usePostComposerForm(opts: {
   communityId: Ref<string | null | undefined>;
   patreonEnabled: Ref<boolean>;
   t: Translate;
-  onSubmitted?: () => void | Promise<void>;
+  onSubmitted?: (result: { id: string; scheduled: boolean }) => void | Promise<void>;
   eventDetail?: () => Record<string, unknown>;
 }) {
   const err = ref("");
@@ -412,13 +412,14 @@ export function usePostComposerForm(opts: {
           body.reply_to_post_id = replyingTo.value.id;
         }
       }
-      await api("/api/v1/posts", {
+      const created = await api<{id:string}>("/api/v1/posts", {
         method: "POST",
         token,
         json: body,
       });
+      const scheduled = !!scheduleLocal.value.trim();
       resetComposer();
-      await opts.onSubmitted?.();
+      await opts.onSubmitted?.({id: created.id, scheduled});
       window.dispatchEvent(new CustomEvent("glipz:post-created", { detail: opts.eventDetail?.() ?? { mode: opts.mode.value } }));
     } catch (e: unknown) {
       err.value = e instanceof Error ? e.message : opts.t("views.compose.errors.postFailed");

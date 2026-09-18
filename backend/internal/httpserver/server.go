@@ -33,15 +33,20 @@ import (
 )
 
 type Server struct {
-	cfg             config.Config
-	db              *repo.Pool
-	rdb             *redis.Client
-	s3              s3client.Store
-	secret          []byte
-	publicFeedCache feedCache
-	userFeedCache   responseCache
-	notifyCache     responseCache
-	dmThreadsCache  responseCache
+	cfg               config.Config
+	db                *repo.Pool
+	rdb               *redis.Client
+	s3                s3client.Store
+	secret            []byte
+	publicFeedCache   feedCache
+	userFeedCache     responseCache
+	notifyCache       responseCache
+	dmThreadsCache    responseCache
+	push              pushQueue
+	sessions          accessSessionStore
+	mediaAccess       mediaAccessStore
+	pushSubscriptions pushSubscriptionStore
+	pushClient        *http.Client
 }
 
 func New(cfg config.Config, pool *pgxpool.Pool, rdb *redis.Client, s3c s3client.Store) http.Handler {
@@ -156,10 +161,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, rdb *redis.Client, s3c s3client.
 		r.Get("/public/federation/incoming/stream", s.handlePublicFederatedIncomingStream)
 		r.Get("/public/federation/custom-emoji", s.handlePublicFederationCustomEmojiResolve)
 		r.Get("/legal-docs/{doc}", s.handleLegalDoc)
-		r.Get("/media/object/*", s.handlePublicMediaObject)
-		r.Head("/media/object/*", s.handlePublicMediaObject)
-		r.Get("/media/remote", s.handlePublicRemoteMediaProxy)
-		r.Head("/media/remote", s.handlePublicRemoteMediaProxy)
+		r.With(s.optionalAccessMiddleware).Get("/media/object/*", s.handlePublicMediaObject)
+		r.With(s.optionalAccessMiddleware).Head("/media/object/*", s.handlePublicMediaObject)
+		r.With(s.optionalAccessMiddleware).Get("/media/remote", s.handlePublicRemoteMediaProxy)
+		r.With(s.optionalAccessMiddleware).Head("/media/remote", s.handlePublicRemoteMediaProxy)
 		r.Get("/identity/transfers/{sessionID}/manifest", s.handleIdentityTransferManifest)
 		r.Get("/identity/transfers/{sessionID}/profile", s.handleIdentityTransferProfile)
 		r.Get("/identity/transfers/{sessionID}/posts", s.handleIdentityTransferPosts)
@@ -355,7 +360,16 @@ func (s *Server) principalForAccess(ctx context.Context, raw string) (uuid.UUID,
 	claims, err := authjwt.Parse(s.secret, raw)
 	if err == nil && claims.Purpose == authjwt.PurposeAccess {
 		u, e := uuid.Parse(claims.Subject)
-		return u, claims, e == nil
+		if e != nil {
+			return uuid.Nil, nil, false
+		}
+		if claims.TokenUse != authjwt.TokenUseOAuth && !s.userSessionActive(ctx, claims, u) {
+			return uuid.Nil, nil, false
+		}
+		return u, claims, true
+	}
+	if s.db == nil {
+		return uuid.Nil, nil, false
 	}
 	u, err := s.db.UserIDFromPersonalAccessToken(ctx, raw)
 	if err == nil {
@@ -385,7 +399,7 @@ func oauthClaimsAllowRequest(claims *authjwt.Claims, r *http.Request) bool {
 		scope["posts:write"] = true
 		scope["media:write"] = true
 	}
-	if scope["posts:read"] && method == http.MethodGet {
+	if scope["posts:read"] && (method == http.MethodGet || method == http.MethodHead) {
 		switch {
 		case path == "/api/v1/me",
 			path == "/api/v1/posts/feed",
@@ -393,7 +407,9 @@ func oauthClaimsAllowRequest(claims *authjwt.Claims, r *http.Request) bool {
 			path == "/api/v1/search",
 			path == "/api/v1/communities":
 			return true
-		case strings.HasPrefix(path, "/api/v1/posts/"),
+		case strings.HasPrefix(path, "/api/v1/media/object/"),
+			path == "/api/v1/media/remote",
+			strings.HasPrefix(path, "/api/v1/posts/"),
 			strings.HasPrefix(path, "/api/v1/users/by-handle/"),
 			strings.HasPrefix(path, "/api/v1/communities/"),
 			strings.HasPrefix(path, "/api/v1/public/federation/incoming"):
@@ -754,7 +770,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	accessTTL := 24 * time.Hour
-	tok, err := authjwt.SignAccess(s.secret, u.ID, accessTTL)
+	tok, err := s.issueAccessToken(r.Context(), u.ID, accessTTL)
 	if err != nil {
 		writeServerError(w, "login SignAccess", err)
 		return
@@ -829,7 +845,7 @@ func (s *Server) handleMFAVerify(w http.ResponseWriter, r *http.Request) {
 	}
 	s.clearMFAFailures(r.Context(), r, uid.String())
 	accessTTL := 24 * time.Hour
-	tok, err := authjwt.SignAccess(s.secret, uid, accessTTL)
+	tok, err := s.issueAccessToken(r.Context(), uid, accessTTL)
 	if err != nil {
 		writeServerError(w, "mfa verify SignAccess", err)
 		return
@@ -848,6 +864,27 @@ func (s *Server) handleMFAVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	if raw, fromCookie, ok := extractAccessCredential(r); ok {
+		if fromCookie && !csrfValid(r) {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "csrf_failed"})
+			return
+		}
+		claims, err := authjwt.Parse(s.secret, raw)
+		if err == nil && claims.Purpose == authjwt.PurposeAccess && claims.TokenUse != authjwt.TokenUseOAuth {
+			id, e1 := uuid.Parse(claims.ID)
+			user, e2 := uuid.Parse(claims.Subject)
+			if e1 == nil && e2 == nil {
+				if s.sessionStore() == nil {
+					writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "session_store_unavailable"})
+					return
+				}
+				if err := s.sessionStore().RevokeAccessSession(r.Context(), id, user); err != nil {
+					writeServerError(w, "revoke session", err)
+					return
+				}
+			}
+		}
+	}
 	s.clearAuthCookies(w, r)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
@@ -1115,7 +1152,8 @@ func (s *Server) handlePresign(w http.ResponseWriter, r *http.Request) {
 		"object_key": objectKey,
 		"public_url": s.glipzProtocolPublicMediaURL(objectKey),
 		"headers": map[string]string{
-			"Content-Type": req.ContentType,
+			"Content-Type":  req.ContentType,
+			"Cache-Control": "private, no-store",
 		},
 	})
 }
@@ -2148,13 +2186,7 @@ func (s *Server) postMediaPreviewURL(ctx context.Context, viewer, author, postID
 	if !hasPW || author == viewer || !scopeProtectsMedia(scope) {
 		return s.glipzProtocolPublicMediaURL(key)
 	}
-	rk := postUnlockRedisKey(viewer, postID)
-	n, err := s.rdb.Exists(ctx, rk).Result()
-	if err != nil {
-		log.Printf("redis Exists media tile %s: %v", postID, err)
-		return ""
-	}
-	if n == 0 {
+	if !s.localPostUnlocked(ctx, viewer, postID) {
 		return ""
 	}
 	return s.glipzProtocolPublicMediaURL(key)
@@ -2312,16 +2344,8 @@ func (s *Server) postRowToFeedItem(ctx context.Context, row repo.PostRow, viewer
 	textLocked := false
 	mediaLocked := false
 	unlocked := row.UserID == viewer
-	if !unlocked {
-		rk := postUnlockRedisKey(viewer, row.ID)
-		n, err := s.rdb.Exists(ctx, rk).Result()
-		if err != nil {
-			log.Printf("redis Exists %s: %v", rk, err)
-			n = 0
-		}
-		if n > 0 {
-			unlocked = true
-		}
+	if !unlocked && (row.HasMembershipLock || row.HasViewPassword) {
+		unlocked = s.localPostUnlocked(ctx, viewer, row.ID)
 	}
 	if !unlocked {
 		if row.HasMembershipLock {
@@ -3315,6 +3339,15 @@ func (s *Server) handlePostUnlock(w http.ResponseWriter, r *http.Request) {
 		writeServerError(w, "PostSensitiveByID", err)
 		return
 	}
+	visible, visibilityErr := s.db.CanViewerReadPost(r.Context(), uid, postID)
+	if visibilityErr != nil {
+		writeServerError(w, "unlock visibility", visibilityErr)
+		return
+	}
+	if !visible {
+		http.NotFound(w, r)
+		return
+	}
 	if row.UserID == uid {
 		s.writeUnlockedPostJSON(w, row)
 		return
@@ -3367,17 +3400,26 @@ func (s *Server) handlePostUnlock(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	rk := postUnlockRedisKey(uid, postID)
-	if err := s.rdb.Set(r.Context(), rk, "1", postUnlockRedisTTL).Err(); err != nil {
+	ttl := unlockGrantTTL(ent, hasMem)
+	if ttl <= 0 {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_entitlement"})
+		return
+	}
+	if err := s.rdb.Set(r.Context(), rk, postLockVersion(row), ttl).Err(); err != nil {
 		writeServerError(w, "unlock redis Set", err)
 		return
 	}
 	s.writeUnlockedPostJSON(w, row)
 }
 
-func (s *Server) writeUnlockedPostJSON(w http.ResponseWriter, row repo.PostSensitive) {
+func (s *Server) writeUnlockedPostJSON(w http.ResponseWriter, row repo.PostSensitive, remoteViewer ...string) {
 	urls := make([]string, 0, len(row.ObjectKeys))
 	for _, k := range row.ObjectKeys {
-		urls = append(urls, s.glipzProtocolPublicMediaURL(k))
+		raw := s.glipzProtocolPublicMediaURL(k)
+		if len(remoteViewer) > 0 {
+			raw = mediaURLForRemoteViewer(raw, remoteViewer[0])
+		}
+		urls = append(urls, raw)
 	}
 	hasPW := row.ViewPasswordHash != nil && strings.TrimSpace(*row.ViewPasswordHash) != ""
 	writeJSON(w, http.StatusOK, map[string]any{

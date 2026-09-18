@@ -8,6 +8,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "vue-tsc --noEmit",
     "dev": "vite",
     "openapi:generate": "node scripts/build-openapi.mjs",
     "version:sync": "node ../scripts/sync-version.mjs",
@@ -42,9 +44,14 @@
     "vue-router": "^4.4.5"
   },
   "overrides": {
-    "dompurify": "^3.4.0"
+    "dompurify": "^3.4.0",
+    "@scalar/json-magic": {
+      "undici": "7.29.1"
+    },
+    "@ai-sdk/provider-utils": "4.0.51"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vitejs/plugin-vue": "^6.0.6",
     "autoprefixer": "^10.4.20",

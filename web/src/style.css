@@ -59,7 +59,7 @@ select,
 input:focus,
 textarea:focus,
 select:focus {
-  outline: none;
+  /* Focus visibility is defined by the shared UI layer. */
 }
 
 html.dark body {
@@ -88,55 +88,19 @@ html.dark body {
 .bg-lime-50\/50,
 .bg-lime-50\/40,
 .bg-lime-100,
-.bg-sky-50,
-.bg-sky-50\/90,
-.bg-sky-50\/70,
-.bg-sky-50\/60,
-.bg-sky-50\/40,
-.bg-emerald-50,
-.bg-emerald-50\/90,
-.bg-emerald-50\/70,
-.bg-emerald-50\/60,
-.bg-amber-50,
-.bg-amber-50\/90,
-.bg-amber-50\/70,
-.bg-amber-100,
-.bg-violet-50,
-.bg-violet-50\/60,
-.bg-violet-50\/40,
-.hover\:bg-lime-50:hover,
-.hover\:bg-sky-50:hover,
-.hover\:bg-emerald-50:hover,
-.hover\:bg-amber-50:hover,
-.hover\:bg-violet-50:hover {
+.hover\:bg-lime-50:hover{
   background-color: rgb(var(--theme-accent-bg) / 0.75);
 }
 
 .bg-lime-500,
 .bg-lime-600,
 .\!bg-lime-600,
-.bg-sky-600,
-.bg-emerald-600,
-.bg-amber-600,
-.bg-violet-600,
 .hover\:bg-lime-500:hover,
-.hover\:bg-sky-500:hover,
-.hover\:bg-emerald-500:hover,
-.hover\:bg-amber-500:hover,
-.hover\:bg-violet-500:hover,
-.hover\:bg-lime-600:hover,
-.hover\:bg-sky-600:hover,
-.hover\:bg-emerald-600:hover,
-.hover\:bg-amber-600:hover,
-.hover\:bg-violet-600:hover {
+.hover\:bg-lime-600:hover{
   background-color: rgb(var(--theme-accent-bg-strong));
 }
 
-.hover\:bg-lime-700:hover,
-.hover\:bg-sky-700:hover,
-.hover\:bg-emerald-700:hover,
-.hover\:bg-amber-700:hover,
-.hover\:bg-violet-700:hover {
+.hover\:bg-lime-700:hover{
   background-color: rgb(var(--theme-accent-bg-hover));
 }
 
@@ -159,44 +123,10 @@ html.dark body {
 .text-lime-600,
 .text-lime-400,
 .text-lime-300\/90,
-.text-sky-950,
-.text-sky-900,
-.text-sky-900\/80,
-.text-sky-800,
-.text-sky-700,
-.text-sky-600,
-.text-emerald-950,
-.text-emerald-900,
-.text-emerald-900\/80,
-.text-emerald-800,
-.text-emerald-700,
-.text-emerald-600,
-.text-amber-950,
-.text-amber-900,
-.text-amber-900\/80,
-.text-amber-900\/75,
-.text-amber-800,
-.text-amber-700,
-.text-amber-600,
-.text-amber-500,
-.text-violet-950,
-.text-violet-900,
-.text-violet-800,
-.text-violet-700,
-.text-violet-600,
 .hover\:text-lime-900:hover,
 .hover\:text-lime-800:hover,
 .hover\:text-lime-700:hover,
-.hover\:text-lime-600:hover,
-.hover\:text-sky-900:hover,
-.hover\:text-sky-800:hover,
-.hover\:text-emerald-900:hover,
-.hover\:text-emerald-800:hover,
-.hover\:text-amber-900:hover,
-.hover\:text-amber-800:hover,
-.hover\:text-amber-500:hover,
-.hover\:text-violet-900:hover,
-.hover\:text-violet-800:hover {
+.hover\:text-lime-600:hover{
   color: rgb(var(--theme-accent-text-strong));
 }
 
@@ -246,11 +176,6 @@ input.text-lime-600 {
 .text-lime-700\/70 {
   color: rgb(var(--theme-accent-text-strong) / 0.7);
 }
-
-.ring-sky-500,
-.ring-emerald-500,
-.ring-amber-500,
-.ring-violet-500,
 .ring-lime-200,
 .ring-lime-300,
 .ring-lime-500,
@@ -259,11 +184,7 @@ input.text-lime-600 {
 .focus\:ring-lime-400\/40:focus,
 .focus\:ring-lime-500:focus,
 .focus\:ring-lime-500\/30:focus,
-.focus-visible\:ring-lime-400:focus-visible,
-.focus\:ring-sky-500:focus,
-.focus\:ring-emerald-500:focus,
-.focus\:ring-amber-500:focus,
-.focus\:ring-violet-500:focus {
+.focus-visible\:ring-lime-400:focus-visible{
   --tw-ring-color: rgb(var(--theme-accent-bg-strong));
 }
 
@@ -318,23 +239,7 @@ html.dark .bg-lime-50\/80,
 html.dark .bg-lime-50\/60,
 html.dark .bg-lime-50\/50,
 html.dark .bg-lime-50\/40,
-html.dark .bg-lime-100,
-html.dark .bg-sky-50,
-html.dark .bg-sky-50\/90,
-html.dark .bg-sky-50\/70,
-html.dark .bg-sky-50\/60,
-html.dark .bg-sky-50\/40,
-html.dark .bg-emerald-50,
-html.dark .bg-emerald-50\/90,
-html.dark .bg-emerald-50\/70,
-html.dark .bg-emerald-50\/60,
-html.dark .bg-amber-50,
-html.dark .bg-amber-50\/90,
-html.dark .bg-amber-50\/70,
-html.dark .bg-amber-100,
-html.dark .bg-violet-50,
-html.dark .bg-violet-50\/60,
-html.dark .bg-violet-50\/40 {
+html.dark .bg-lime-100{
   background-color: rgb(var(--theme-accent-bg) / 0.75);
 }
 
@@ -410,23 +315,7 @@ html.dark .text-lime-800 {
 }
 
 html.dark .text-lime-700,
-html.dark .text-lime-100,
-html.dark .text-sky-950,
-html.dark .text-sky-900,
-html.dark .text-sky-900\/80,
-html.dark .text-sky-800,
-html.dark .text-emerald-950,
-html.dark .text-emerald-900,
-html.dark .text-emerald-900\/80,
-html.dark .text-emerald-800,
-html.dark .text-amber-950,
-html.dark .text-amber-900,
-html.dark .text-amber-900\/80,
-html.dark .text-amber-900\/75,
-html.dark .text-amber-800,
-html.dark .text-violet-950,
-html.dark .text-violet-900,
-html.dark .text-violet-800 {
+html.dark .text-lime-100{
   color: rgb(var(--theme-accent-text-strong));
 }
 

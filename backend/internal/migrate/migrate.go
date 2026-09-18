@@ -65,5 +65,8 @@ END $$`,
 	if err := RunLegalCompliance(ctx, pool); err != nil {
 		return err
 	}
+	if err := RunAccessSessions(ctx, pool); err != nil {
+		return err
+	}
 	return nil
 }

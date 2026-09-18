@@ -846,7 +846,7 @@ async function submitUnlock(it: TimelinePost) {
 </script>
 
 <template>
-  <div>
+  <div class="ui-timeline">
     <Teleport to="body">
       <div
         v-if="ageGatePostId"
@@ -921,7 +921,7 @@ async function submitUnlock(it: TimelinePost) {
       <RouterLink
         v-if="rowActorProfileRoute(it)"
         :to="rowActorProfileRoute(it)!"
-        class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-xs font-bold text-neutral-700 hover:ring-2 hover:ring-lime-300"
+        class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ui-avatar-fallback text-xs font-bold hover:ring-2 hover:ring-lime-300"
         :aria-label="$t('components.postTimeline.profileAria', { name: rowActorDisplayName(it) })"
       >
         <img
@@ -935,7 +935,7 @@ async function submitUnlock(it: TimelinePost) {
       </RouterLink>
       <div
         v-else
-        class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-xs font-bold text-neutral-700"
+        class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ui-avatar-fallback text-xs font-bold"
         :aria-label="`${rowActorDisplayName(it)}`"
       >
         <img
@@ -1208,7 +1208,7 @@ async function submitUnlock(it: TimelinePost) {
             <RouterLink
               v-if="originalPostProfileRoute(it)"
               :to="originalPostProfileRoute(it)!"
-              class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-[11px] font-bold text-neutral-700 hover:ring-2 hover:ring-lime-300"
+              class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ui-avatar-fallback text-[11px] font-bold hover:ring-2 hover:ring-lime-300"
               :aria-label="$t('components.postTimeline.profileAria', { name: timelineDisplayName(it) })"
             >
               <img
@@ -1223,7 +1223,7 @@ async function submitUnlock(it: TimelinePost) {
             </RouterLink>
             <div
               v-else
-              class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-[11px] font-bold text-neutral-700"
+              class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ui-avatar-fallback text-[11px] font-bold"
               :aria-label="`${timelineDisplayName(it)}`"
             >
               <img

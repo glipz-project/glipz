@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import Button from "../components/ui/Button.vue";
+import FormField from "../components/ui/FormField.vue";
+import PasswordInput from "../components/ui/PasswordInput.vue";
+import Alert from "../components/ui/Alert.vue";
+import PageHeader from "../components/ui/PageHeader.vue";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -36,7 +41,7 @@ async function submit() {
     await router.push("/feed");
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "";
-    err.value = msg === "account_suspended" ? t("auth.mfa.suspended") : msg || t("auth.mfa.failed");
+    err.value = msg === "account_suspended" ? t("auth.mfa.suspended") : t("auth.mfa.failed");
   } finally {
     loading.value = false;
   }
@@ -44,34 +49,14 @@ async function submit() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-md space-y-6">
+  <div class="ui-auth space-y-6">
     <AuthLogo />
-    <div>
-      <h1 class="text-2xl font-semibold text-neutral-900">{{ $t("auth.mfa.title") }}</h1>
-      <p class="mt-1 text-sm text-neutral-600">{{ $t("auth.mfa.description") }}</p>
-    </div>
-    <form class="space-y-4" @submit.prevent="submit">
-      <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.mfa.code") }}</label>
-        <input
-          v-model="code"
-          type="text"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="8"
-          required
-          autocomplete="one-time-code"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
-        />
-      </div>
-      <p v-if="err" class="text-sm text-red-600">{{ err }}</p>
-      <button
-        type="submit"
-        class="w-full rounded-md bg-lime-500 py-2 font-medium text-white hover:bg-lime-600 disabled:opacity-50"
-        :disabled="loading"
-      >
-        {{ $t("auth.mfa.submit") }}
-      </button>
+    <PageHeader :title="$t('auth.mfa.title')" :description="$t('auth.mfa.description')" />
+    <form @submit.prevent="submit" :aria-busy="loading">
+      <FormField id="mfa-code" :label="$t('auth.mfa.code')" :error="err" required v-slot="field">
+        <input v-model="code" :id="field.id" :aria-describedby="field.describedby" :aria-invalid="field.invalid" class="ui-input" type="text" inputmode="numeric" pattern="[0-9]{6,8}" minlength="6" maxlength="8" required autocomplete="one-time-code" />
+      </FormField>
+      <Button type="submit" :loading="loading" class="w-full">{{ $t(loading ? 'ux.working' : 'auth.mfa.submit') }}</Button>
     </form>
   </div>
 </template>

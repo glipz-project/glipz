@@ -1,3 +1,4 @@
+import { uxMessages } from "../locales/ux";
 import { createI18n } from "vue-i18n";
 import { APP_NAME } from "../lib/appInfo";
 import { enOverrides } from "../locales/en";
@@ -115,6 +116,8 @@ const messages: Record<AppLocale, AppMessageSchema> = {
   es: mergeDeep(jaMessages, esOverrides),
   pt: mergeDeep(jaMessages, ptOverrides),
 };
+
+for (const locale of supportedLocales) Object.assign(messages[locale], { ux: uxMessages[locale] });
 
 export const i18n = createI18n({
   legacy: false,

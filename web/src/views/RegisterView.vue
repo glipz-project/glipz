@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Button from "../components/ui/Button.vue";
+import PasswordInput from "../components/ui/PasswordInput.vue";
+import Alert from "../components/ui/Alert.vue";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { RouterLink } from "vue-router";
@@ -79,15 +82,6 @@ const birthDateError = computed(() => {
   }
   return null;
 });
-const canSubmit = computed(() =>
-  !loading.value
-  && !handleBusy.value
-  && !handleClientError.value
-  && !passwordConfirmError.value
-  && !birthDateError.value
-  && termsAgreed.value
-  && handleAvailability.value?.available === true,
-);
 
 function saveApiBase() {
   if (!showApiBaseInput) return;
@@ -207,22 +201,27 @@ async function submit() {
   await checkHandleAvailability();
   if (handleClientError.value) {
     err.value = handleClientError.value;
+    document.getElementById("register-handle")?.focus();
     return;
   }
   if (!handleAvailability.value?.available) {
     err.value = handleReasonMessage(handleAvailability.value?.reason ?? "") || t("auth.register.errors.reviewHandle");
+    document.getElementById("register-handle")?.focus();
     return;
   }
   if (passwordConfirmError.value) {
     err.value = passwordConfirmError.value;
+    document.getElementById("register-passwordConfirm")?.focus();
     return;
   }
   if (birthDateError.value) {
     err.value = birthDateError.value;
+    document.getElementById("register-birthDate")?.focus();
     return;
   }
   if (!termsAgreed.value) {
     err.value = t("auth.register.errors.termsNotAgreed");
+    document.getElementById("register-terms")?.focus();
     return;
   }
   loading.value = true;
@@ -269,7 +268,7 @@ async function resendVerificationEmail() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-md space-y-6">
+  <div class="ui-auth space-y-6">
     <AuthLogo />
     <div v-if="!submitted">
       <h1 class="text-2xl font-semibold text-neutral-900">{{ $t("auth.register.title") }}</h1>
@@ -279,14 +278,14 @@ async function resendVerificationEmail() {
     </div>
     <form v-if="!submitted" class="space-y-4" @submit.prevent="submit">
       <div v-if="showApiBaseInput" class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.apiBase.label") }}</label>
+        <label for="register-apiBaseInput" class="ui-label">{{ $t("auth.apiBase.label") }}</label>
         <input
-          v-model="apiBaseInput"
+          v-model="apiBaseInput" id="register-apiBaseInput"
           type="text"
           inputmode="url"
           autocomplete="off"
           spellcheck="false"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
           :placeholder="$t('auth.apiBase.placeholder')"
           @blur="saveApiBase"
         />
@@ -310,30 +309,31 @@ async function resendVerificationEmail() {
         </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.register.email") }}</label>
+        <label for="register-email" class="ui-label">{{ $t("auth.register.email") }}</label>
         <input
-          v-model="email"
+          v-model="email" id="register-email"
           type="email"
           required
           autocomplete="email"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
         />
       </div>
       <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.register.handle") }}</label>
+        <label for="register-handle" class="ui-label">{{ $t("auth.register.handle") }}</label>
         <input
-          v-model="handle"
+          v-model="handle" id="register-handle" aria-describedby="register-handle-hint register-handle-state" :aria-invalid="!!(handleTouched && (handleClientError || (handleAvailability && !handleAvailability.available)))"
           type="text"
           required
           autocapitalize="off"
           autocomplete="off"
           spellcheck="false"
           maxlength="30"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
           :placeholder="$t('auth.register.handlePlaceholder')"
           @blur="checkHandleAvailability"
         />
-        <p class="mt-1 text-xs text-neutral-500">{{ $t("auth.register.handleHint") }}</p>
+        <p id="register-handle-hint" class="ui-hint">{{ $t("auth.register.handleHint") }}</p>
+        <div id="register-handle-state" aria-live="polite">
         <p v-if="handleTouched && handleClientError" class="mt-1 text-sm text-red-600">{{ handleClientError }}</p>
         <p v-else-if="handleBusy" class="mt-1 text-sm text-neutral-500">{{ $t("auth.register.handleChecking") }}</p>
         <p v-else-if="handleAvailability?.available" class="mt-1 text-sm text-lime-700">{{ $t("auth.register.handleAvailable") }}</p>
@@ -343,40 +343,41 @@ async function resendVerificationEmail() {
         >
           {{ handleReasonMessage(handleAvailability.reason) || $t("auth.register.handleCheckFailed") }}
         </p>
+        </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.register.password") }}</label>
-        <input
-          v-model="password"
-          type="password"
+        <label for="register-password" class="ui-label">{{ $t("auth.register.password") }}</label>
+        <PasswordInput
+          v-model="password" id="register-password"
+
           required
           minlength="8"
           autocomplete="new-password"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
         />
       </div>
       <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.register.passwordConfirm") }}</label>
-        <input
-          v-model="passwordConfirm"
-          type="password"
+        <label for="register-passwordConfirm" class="ui-label">{{ $t("auth.register.passwordConfirm") }}</label>
+        <PasswordInput
+          v-model="passwordConfirm" id="register-passwordConfirm" :aria-invalid="!!(passwordConfirm && passwordConfirmError)" :aria-describedby="passwordConfirm && passwordConfirmError ? 'register-confirm-error' : undefined"
+
           required
           minlength="8"
           autocomplete="new-password"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
         />
-        <p v-if="passwordConfirm && passwordConfirmError" class="mt-1 text-sm text-red-600">{{ passwordConfirmError }}</p>
+        <p id="register-confirm-error" role="alert" v-if="passwordConfirm && passwordConfirmError" class="mt-1 text-sm text-red-600">{{ passwordConfirmError }}</p>
       </div>
       <div>
-        <label class="block text-sm font-medium text-neutral-700">{{ $t("auth.register.birthDate") }}</label>
+        <label for="register-birthDate" class="ui-label">{{ $t("auth.register.birthDate") }}</label>
         <input
-          v-model="birthDate"
+          v-model="birthDate" id="register-birthDate" :aria-invalid="!!(birthDate && birthDateError)" :aria-describedby="birthDate && birthDateError ? 'register-birth-error' : undefined"
           type="date"
           required
           max="9999-12-31"
-          class="mt-1 w-full rounded-md border border-lime-200 bg-white px-3 py-2 text-neutral-900 outline-none ring-lime-500 focus:ring-2"
+          class="ui-input mt-1"
         />
-        <p v-if="birthDate && birthDateError" class="mt-1 text-sm text-red-600">{{ birthDateError }}</p>
+        <p id="register-birth-error" role="alert" v-if="birthDate && birthDateError" class="mt-1 text-sm text-red-600">{{ birthDateError }}</p>
       </div>
       <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm text-neutral-700">
         <p class="leading-relaxed">
@@ -410,21 +411,16 @@ async function resendVerificationEmail() {
         </p>
         <label class="mt-3 inline-flex cursor-pointer items-start gap-2 text-neutral-800">
           <input
-            v-model="termsAgreed"
+            v-model="termsAgreed" id="register-terms" required
             type="checkbox"
             class="mt-0.5 h-4 w-4 rounded border-neutral-200 text-lime-600 focus:ring-lime-500"
           />
           <span>{{ $t("auth.register.agreement") }}</span>
         </label>
       </div>
-      <p v-if="err" class="text-sm text-red-600">{{ err }}</p>
-      <button
-        type="submit"
-        class="w-full rounded-md bg-lime-500 py-2 font-medium text-white hover:bg-lime-600 disabled:opacity-50"
-        :disabled="!canSubmit"
-      >
-        {{ $t("auth.register.submit") }}
-      </button>
+      <Alert v-if="err" tone="error">{{ err }}</Alert>
+      <p class="ui-hint">{{ $t('ux.submitHint') }}</p>
+      <Button type="submit" class="w-full" :loading="loading || handleBusy">{{ $t(loading ? 'ux.working' : 'auth.register.submit') }}</Button>
       <p class="text-center text-sm text-neutral-600">
         {{ $t("auth.register.alreadyHaveAccount") }}
         <RouterLink to="/login" class="font-medium text-lime-700 hover:text-lime-800">
@@ -432,7 +428,7 @@ async function resendVerificationEmail() {
         </RouterLink>
       </p>
     </form>
-    <div v-else class="space-y-3 rounded-xl border border-lime-200 bg-lime-50 p-4 text-sm text-neutral-700">
+    <div v-else role="status" class="space-y-3 rounded-xl border border-lime-200 bg-lime-50 p-4 text-sm text-neutral-700">
       <p class="font-medium text-neutral-900">{{ $t("auth.register.submittedTitle") }}</p>
       <p>
         {{ $t("auth.register.submittedBody", { email }) }}

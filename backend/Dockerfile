@@ -7,7 +7,7 @@ RUN npm ci --no-audit --ignore-scripts
 COPY web/ ./
 RUN npm run build
 
-FROM golang:1.26.2-alpine AS gobuild
+FROM golang:1.26.8-alpine AS gobuild
 WORKDIR /src
 RUN apk add --no-cache git ca-certificates
 COPY backend/go.mod backend/go.sum ./
@@ -15,7 +15,7 @@ RUN go mod download
 COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server ./cmd/server
 
-FROM alpine:3.20
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=gobuild /out/server .

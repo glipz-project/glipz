@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from "../components/ui/EmptyState.vue";
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { RouterLink, useRoute, useRouter } from "vue-router";
@@ -238,9 +239,9 @@ onBeforeUnmount(() => {
         {{ $t("views.notifications.tabReplies") }}
       </button>
     </div>
-    <p v-if="err" class="border-b border-neutral-200 px-4 py-3 text-sm text-red-600">{{ err }}</p>
-    <p v-else-if="busy && !items.length" class="px-4 py-10 text-center text-sm text-neutral-500">{{ $t("app.loading") }}</p>
-    <p v-else-if="!items.length" class="px-4 py-10 text-center text-sm text-neutral-500">{{ $t("views.notifications.empty") }}</p>
+    <EmptyState v-if="err" :title="err" :action-label="$t('ux.retry')" @action="refreshList" />
+    <EmptyState v-else-if="busy && !items.length" :title="$t('app.loading')" busy />
+    <EmptyState v-else-if="!items.length" :title="$t('views.notifications.empty')" />
     <ul v-else class="divide-y divide-neutral-200">
       <li v-for="it in items" :key="it.id">
         <div
@@ -252,11 +253,7 @@ onBeforeUnmount(() => {
           @keydown.enter.prevent="goNotif(it)"
           @keydown.space.prevent="goNotif(it)"
         >
-          <span
-            class="mt-2 h-2 w-2 shrink-0 rounded-full"
-            :class="it.read_at ? 'bg-transparent' : 'bg-lime-500'"
-            aria-hidden="true"
-          />
+          <span v-if="!it.read_at" class="ui-unread">{{ $t("ux.unread") }}</span>
           <div class="flex shrink-0 items-start gap-2">
             <Icon name="heart" class="mt-1.5 size-[25px] shrink-0 text-rose-500" decorative />
             <div
@@ -299,11 +296,7 @@ onBeforeUnmount(() => {
           @keydown.enter.prevent="goNotif(it)"
           @keydown.space.prevent="goNotif(it)"
         >
-          <span
-            class="mt-2 h-2 w-2 shrink-0 rounded-full"
-            :class="it.read_at ? 'bg-transparent' : 'bg-lime-500'"
-            aria-hidden="true"
-          />
+          <span v-if="!it.read_at" class="ui-unread">{{ $t("ux.unread") }}</span>
           <div class="flex shrink-0 items-start gap-2">
             <Icon name="user" class="mt-1.5 size-[25px] shrink-0 text-lime-600" decorative />
             <div
@@ -339,11 +332,7 @@ onBeforeUnmount(() => {
           @keydown.space.prevent="goNotif(it)"
         >
           <div class="flex gap-3 px-4 pt-3">
-            <span
-              class="mt-2 h-2 w-2 shrink-0 rounded-full"
-              :class="it.read_at ? 'bg-transparent' : 'bg-lime-500'"
-              aria-hidden="true"
-            />
+            <span v-if="!it.read_at" class="ui-unread">{{ $t("ux.unread") }}</span>
             <div class="min-w-0 flex-1">
               <div
                 class="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-neutral-200 bg-neutral-50/90 px-4 py-2 text-xs text-neutral-600 -mx-4"
@@ -424,11 +413,7 @@ onBeforeUnmount(() => {
           @keydown.enter.prevent="goNotif(it)"
           @keydown.space.prevent="goNotif(it)"
         >
-          <span
-            class="mt-1 h-2 w-2 shrink-0 rounded-full"
-            :class="it.read_at ? 'bg-transparent' : 'bg-lime-500'"
-            aria-hidden="true"
-          />
+          <span v-if="!it.read_at" class="ui-unread">{{ $t("ux.unread") }}</span>
           <div
             v-if="safeNotificationURL(it.actor_avatar_url)"
             class="mt-0.5 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-xs font-bold text-neutral-700"

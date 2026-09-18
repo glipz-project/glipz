@@ -52,3 +52,5 @@ printConsoleSafetyWarning();
 initTheme();
 void registerPushServiceWorker();
 createApp(App).use(i18n).use(router).mount("#app");
+
+import "./styles/ui.css";

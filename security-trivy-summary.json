@@ -1,0 +1,14 @@
+{
+  "scanDate": "2026-09-18T17:54:24.957651277Z",
+  "artifact": "/scan/glipz-security-image.tar",
+  "findings": [
+    {
+      "VulnerabilityID": "GO-2026-5932",
+      "PkgName": "golang.org/x/crypto",
+      "InstalledVersion": "v0.56.0",
+      "FixedVersion": null,
+      "Severity": "UNKNOWN"
+    }
+  ],
+  "count": 1
+}

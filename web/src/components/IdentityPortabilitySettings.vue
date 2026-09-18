@@ -734,7 +734,7 @@ onBeforeUnmount(() => {
       </p>
     </div>
 
-    <p v-if="message" class="text-xs font-medium text-lime-700">{{ message }}</p>
-    <p v-if="error" class="text-xs font-medium text-red-600">{{ error }}</p>
+    <p role="status" v-if="message" class="text-xs font-medium text-lime-700">{{ message }}</p>
+    <p role="alert" v-if="error" class="text-xs font-medium text-red-600">{{ error }}</p>
   </div>
 </template>

@@ -494,7 +494,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-0 h-full w-full min-w-0 text-neutral-900">
+  <div class="w-full min-w-0 text-neutral-900">
   <PullToRefresh :on-refresh="refreshCommunity">
   <div class="border-b border-neutral-200">
     <div
@@ -652,12 +652,12 @@ onUnmounted(() => {
   </section>
 
   <nav v-if="community" class="border-b border-neutral-200 px-4" :aria-label="$t('views.communityDetail.tabsLabel')">
-    <div class="flex gap-4 overflow-x-auto">
+    <div class="ui-hub-tabs flex gap-4 overflow-x-auto overflow-y-hidden">
       <button
         v-for="tab in communityTabs"
         :key="tab.key"
         type="button"
-        class="relative shrink-0 -mb-px border-b-2 px-1 py-3 text-sm font-semibold transition-colors"
+        class="relative shrink-0 border-b-2 px-1 py-3 text-sm font-semibold transition-colors"
         :class="
           activeTab === tab.key
             ? 'border-lime-600 text-neutral-900'

@@ -3,11 +3,11 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/google/uuid"
@@ -35,15 +35,19 @@ func (s *Server) queueWebPush(recipientID uuid.UUID, payload webPushNotification
 	if !s.cfg.WebPushEnabled() {
 		return
 	}
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		s.sendWebPushToUser(ctx, recipientID, payload)
-	}()
+	s.enqueuePush(recipientID, payload)
 }
 
 func (s *Server) sendWebPushToUser(ctx context.Context, recipientID uuid.UUID, payload webPushNotification) {
-	items, err := s.db.ListPushSubscriptionsByUser(ctx, recipientID)
+	store := s.pushStore()
+	if store == nil {
+		return
+	}
+	client := s.pushClient
+	if client == nil {
+		client = pushHTTPClient
+	}
+	items, err := store.ListPushSubscriptionsByUser(ctx, recipientID)
 	if err != nil {
 		log.Printf("ListPushSubscriptionsByUser: %v", err)
 		return
@@ -57,13 +61,22 @@ func (s *Server) sendWebPushToUser(ctx context.Context, recipientID uuid.UUID, p
 		return
 	}
 	for _, item := range items {
-		resp, err := webpush.SendNotification(body, &webpush.Subscription{
+		if ctx.Err() != nil {
+			return
+		}
+		if !validPushEndpoint(item.Endpoint) || !validPushKeys(item.P256DH, item.Auth) {
+			pushSecurityMetrics.Add("rejected", 1)
+			_ = store.DeletePushSubscription(ctx, recipientID, item.Endpoint)
+			continue
+		}
+		resp, err := webpush.SendNotificationWithContext(ctx, body, &webpush.Subscription{
 			Endpoint: item.Endpoint,
 			Keys: webpush.Keys{
 				P256dh: item.P256DH,
 				Auth:   item.Auth,
 			},
 		}, &webpush.Options{
+			HTTPClient:      client,
 			Subscriber:      s.cfg.WebPushVAPIDSubject,
 			VAPIDPublicKey:  s.cfg.WebPushVAPIDPublicKey,
 			VAPIDPrivateKey: s.cfg.WebPushVAPIDPrivateKey,
@@ -71,21 +84,21 @@ func (s *Server) sendWebPushToUser(ctx context.Context, recipientID uuid.UUID, p
 			Urgency:         webpush.UrgencyHigh,
 		})
 		if err != nil {
-			_ = s.db.MarkPushSubscriptionFailure(ctx, item.Endpoint, err.Error())
-			log.Printf("web push send %s: %v", item.Endpoint, err)
+			pushSecurityMetrics.Add("send_failed", 1)
+			_ = store.MarkPushSubscriptionFailure(ctx, item.Endpoint, "send_failed")
 			continue
 		}
 		func() {
 			defer resp.Body.Close()
 			if resp.StatusCode == http.StatusGone || resp.StatusCode == http.StatusNotFound {
-				_ = s.db.DeletePushSubscriptionByEndpoint(ctx, item.Endpoint)
+				_ = store.DeletePushSubscriptionByEndpoint(ctx, item.Endpoint)
 				return
 			}
 			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				_ = s.db.MarkPushSubscriptionFailure(ctx, item.Endpoint, fmt.Sprintf("push_http_%d", resp.StatusCode))
+				_ = store.MarkPushSubscriptionFailure(ctx, item.Endpoint, fmt.Sprintf("push_http_%d", resp.StatusCode))
 				return
 			}
-			_ = s.db.MarkPushSubscriptionSuccess(ctx, item.Endpoint)
+			_ = store.MarkPushSubscriptionSuccess(ctx, item.Endpoint)
 		}()
 	}
 }
@@ -272,8 +285,12 @@ func (s *Server) handlePutMeWebPushSubscription(w http.ResponseWriter, r *http.R
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_json"})
 		return
 	}
-	if strings.TrimSpace(req.Endpoint) == "" || strings.TrimSpace(req.Keys.P256DH) == "" || strings.TrimSpace(req.Keys.Auth) == "" {
+	if !validPushEndpoint(req.Endpoint) || !validPushKeys(req.Keys.P256DH, req.Keys.Auth) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_subscription"})
+		return
+	}
+	if s.sensitiveActionRateLimitExceeded(r.Context(), r, "push_subscription") {
+		writeSensitiveActionRateLimited(w)
 		return
 	}
 	if err := s.db.UpsertPushSubscription(r.Context(), uid, repo.UpsertPushSubscriptionInput{
@@ -282,6 +299,10 @@ func (s *Server) handlePutMeWebPushSubscription(w http.ResponseWriter, r *http.R
 		Auth:      req.Keys.Auth,
 		UserAgent: r.UserAgent(),
 	}); err != nil {
+		if errors.Is(err, repo.ErrForbidden) {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "subscription_limit_or_conflict"})
+			return
+		}
 		writeServerError(w, "UpsertPushSubscription", err)
 		return
 	}

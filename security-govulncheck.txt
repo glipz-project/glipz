@@ -1,0 +1,276 @@
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6218
+    Avoid quadratic complexity in resolvePath in net/url
+  More info: https://pkg.go.dev/vuln/GO-2026-6218
+  Standard library
+    Found in: net/url@go1.26.5
+    Fixed in: net/url@go1.26.6
+    Example traces found:
+      #1: internal/fanclub/patreon/client.go:306:26: patreon.Client.ListCreatorCampaigns calls http.Client.Do, which eventually calls url.URL.Parse
+
+Vulnerability #2: GO-2026-6090
+    Limit handshake messages we are willing to accept post-handshake in
+    crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-6090
+  Standard library
+    Found in: crypto/tls@go1.26.5
+    Fixed in: crypto/tls@go1.26.6
+    Example traces found:
+      #1: cmd/server/main.go:164:30: server.main calls http.Server.ListenAndServe, which eventually calls tls.Conn.HandshakeContext
+      #2: internal/fanclub/patreon/client.go:311:23: patreon.Client.ListCreatorCampaigns calls io.ReadAll, which eventually calls tls.Conn.Read
+      #3: internal/fanclub/patreon/client.go:310:2: patreon.Client.ListCreatorCampaigns calls http.http2transportResponseBody.Close, which eventually calls tls.Conn.Write
+      #4: internal/mailer/mailer.go:85:33: mailer.sendTextSMTP calls tls.DialWithDialer
+      #5: internal/fanclub/patreon/client.go:306:26: patreon.Client.ListCreatorCampaigns calls http.Client.Do, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #3: GO-2026-6089
+    Apply ReadHeaderTimeout when doing unencrypted HTTP/2 check in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6089
+  Standard library
+    Found in: net/http@go1.26.5
+    Fixed in: net/http@go1.26.6
+    Example traces found:
+      #1: cmd/server/main.go:164:30: server.main calls http.Server.ListenAndServe
+
+Vulnerability #4: GO-2026-6088
+    Add recursion depth guard during decode in encoding/xml
+  More info: https://pkg.go.dev/vuln/GO-2026-6088
+  Standard library
+    Found in: encoding/xml@go1.26.5
+    Fixed in: encoding/xml@go1.26.6
+    Example traces found:
+      #1: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls xml.Decoder.Decode
+      #2: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls xml.Decoder.Skip
+      #3: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls xml.Decoder.Token
+
+Vulnerability #5: GO-2026-5972
+    Enforce maximum recursion depth in encoding/asn1
+  More info: https://pkg.go.dev/vuln/GO-2026-5972
+  Standard library
+    Found in: encoding/asn1@go1.26.5
+    Fixed in: encoding/asn1@go1.26.6
+    Example traces found:
+      #1: cmd/server/main.go:29:2: server.main calls pgxpool.Pool.Close, which eventually calls asn1.Unmarshal
+
+Vulnerability #6: GO-2026-5970
+    Infinite loop on invalid input in golang.org/x/text
+  More info: https://pkg.go.dev/vuln/GO-2026-5970
+  Module: golang.org/x/text
+    Found in: golang.org/x/text@v0.36.0
+    Fixed in: golang.org/x/text@v0.39.0
+    Example traces found:
+      #1: cmd/server/main.go:25:26: server.main calls pgxpool.New, which eventually calls norm.Form.Properties
+      #2: cmd/server/main.go:25:26: server.main calls pgxpool.New, which eventually calls norm.Form.Span
+      #3: cmd/server/main.go:25:26: server.main calls pgxpool.New, which eventually calls norm.Form.Transform
+
+Vulnerability #7: GO-2026-5777
+    Chi's RealIP Middleware allows IP spoofing via unvalidated X-Forwarded-For
+    header in github.com/go-chi/chi
+  More info: https://pkg.go.dev/vuln/GO-2026-5777
+  Module: github.com/go-chi/chi/v5
+    Found in: github.com/go-chi/chi/v5@v5.2.5
+    Fixed in: github.com/go-chi/chi/v5@v5.3.0
+    Example traces found:
+      #1: internal/httpserver/static_spa.go:38:12: httpserver.Server.mountStaticSPAFallback calls chi.Mux.NotFound, which eventually calls middleware.RealIP
+
+Vulnerability #8: GO-2026-5775
+    Chi Middleware vulnerable to IP spoofing via X-Forwarded-For header in
+    github.com/go-chi/chi
+  More info: https://pkg.go.dev/vuln/GO-2026-5775
+  Module: github.com/go-chi/chi/v5
+    Found in: github.com/go-chi/chi/v5@v5.2.5
+    Fixed in: github.com/go-chi/chi/v5@v5.3.0
+    Example traces found:
+      #1: internal/httpserver/static_spa.go:38:12: httpserver.Server.mountStaticSPAFallback calls chi.Mux.NotFound, which eventually calls middleware.RealIP
+
+Vulnerability #9: GO-2026-5774
+    Chi has an IP spoofing vulnerability in middleware.RealIP in
+    github.com/go-chi/chi
+  More info: https://pkg.go.dev/vuln/GO-2026-5774
+  Module: github.com/go-chi/chi/v5
+    Found in: github.com/go-chi/chi/v5@v5.2.5
+    Fixed in: github.com/go-chi/chi/v5@v5.3.0
+    Example traces found:
+      #1: internal/httpserver/static_spa.go:38:12: httpserver.Server.mountStaticSPAFallback calls chi.Mux.NotFound, which eventually calls middleware.RealIP
+
+Vulnerability #10: GO-2026-5764
+    DoS due to Panic in AWS SDK for Go v2 SDK EventStream Decoder in
+    github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream
+  More info: https://pkg.go.dev/vuln/GO-2026-5764
+  Module: github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream
+    Found in: github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream@v1.6.3
+    Fixed in: github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream@v1.7.8
+    Example traces found:
+      #1: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls eventstream.ChecksumError.Error
+      #2: internal/s3client/s3client.go:183:21: s3client.Client.PublicURL calls fmt.Sprintf, which eventually calls eventstream.Int16Value.String
+      #3: internal/s3client/s3client.go:183:21: s3client.Client.PublicURL calls fmt.Sprintf, which eventually calls eventstream.Int32Value.String
+      #4: internal/s3client/s3client.go:183:21: s3client.Client.PublicURL calls fmt.Sprintf, which eventually calls eventstream.Int64Value.String
+      #5: internal/s3client/s3client.go:183:21: s3client.Client.PublicURL calls fmt.Sprintf, which eventually calls eventstream.Int8Value.String
+      #6: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls eventstream.LengthError.Error
+      #7: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which calls eventstream.init
+      #8: internal/s3client/s3client.go:183:21: s3client.Client.PublicURL calls fmt.Sprintf, which eventually calls eventstream.valueType.String
+      #9: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which calls eventstreamapi.init
+
+  Module: github.com/aws/aws-sdk-go-v2/service/s3
+    Found in: github.com/aws/aws-sdk-go-v2/service/s3@v1.58.2
+    Fixed in: github.com/aws/aws-sdk-go-v2/service/s3@v1.97.3
+    Example traces found:
+      #1: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls arn.ParseEndpointARN
+      #2: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which eventually calls arn.init
+      #3: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.AddExpiresOnPresignedURL.HandleBuild
+      #4: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.AddExpiresOnPresignedURL.ID
+      #5: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.ExpressIdentityResolver.GetIdentity
+      #6: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.ExpressSigner.SignRequest
+      #7: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.GetPropertiesBackend
+      #8: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.NewPresignHTTPRequestMiddleware
+      #9: internal/s3client/s3client.go:88:42: s3client.New calls s3.NewPresignClient, which eventually calls customizations.PresignHTTP
+      #10: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.PresignHTTPRequestMiddleware.HandleFinalize
+      #11: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.PresignHTTPRequestMiddleware.ID
+      #12: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.RegisterPreSigningMiddleware
+      #13: internal/s3client/s3client.go:66:30: s3client.New calls s3.NewFromConfig, which eventually calls customizations.ResolveDisableExpressAuth
+      #14: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.SetBucket
+      #15: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.SetSignerVersion
+      #16: internal/s3client/s3client.go:88:42: s3client.New calls s3.NewPresignClient, which eventually calls customizations.SignRequest
+      #17: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.UpdateEndpoint
+      #18: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which calls customizations.init
+      #19: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.processARNResource.HandleSerialize
+      #20: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.processARNResource.ID
+      #21: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.removeBucketFromPathMiddleware.HandleSerialize
+      #22: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.removeBucketFromPathMiddleware.ID
+      #23: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.s3ExpressCredentialsAdapter.Retrieve
+      #24: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.s3ExpressPresignerAdapter.PresignHTTP
+      #25: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.s3ObjectLambdaEndpoint.HandleSerialize
+      #26: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.s3ObjectLambdaEndpoint.ID
+      #27: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.updateEndpoint.HandleSerialize
+      #28: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls customizations.updateEndpoint.ID
+      #29: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls endpoints.GetDNSSuffix
+      #30: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which calls endpoints.init
+      #31: internal/s3client/s3client.go:173:35: s3client.Client.DeleteObject calls s3.Client.DeleteObject
+      #32: internal/s3client/s3client.go:150:34: s3client.Client.GetObject calls s3.Client.GetObject
+      #33: internal/s3client/s3client.go:125:35: s3client.Client.HeadObject calls s3.Client.HeadObject
+      #34: internal/s3client/s3client.go:108:32: s3client.Client.PutObject calls s3.Client.PutObject
+      #35: internal/s3client/s3client.go:66:30: s3client.New calls s3.NewFromConfig
+      #36: internal/s3client/s3client.go:88:42: s3client.New calls s3.NewPresignClient
+      #37: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.Options.GetIdentityResolver
+      #38: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject
+      #39: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.ResolveEndpoint.HandleSerialize
+      #40: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.ResolveEndpoint.ID
+      #41: cmd/server/main.go:29:2: server.main calls pgxpool.Pool.Close, which eventually calls s3.SelectObjectContentEventStream.safeClose
+      #42: internal/s3client/s3client.go:117:26: s3client.Client.PresignPut calls s3.WithPresignExpires
+      #43: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.addIsWaiterUserAgent
+      #44: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.addRetry
+      #45: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpCreateSession.HandleDeserialize
+      #46: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpCreateSession.ID
+      #47: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpDeleteObject.HandleDeserialize
+      #48: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpDeleteObject.ID
+      #49: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpGetObject.HandleDeserialize
+      #50: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpGetObject.ID
+      #51: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpHeadObject.HandleDeserialize
+      #52: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpHeadObject.ID
+      #53: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpPutObject.HandleDeserialize
+      #54: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_deserializeOpPutObject.ID
+      #55: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpCreateSession.HandleSerialize
+      #56: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpCreateSession.ID
+      #57: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpDeleteObject.HandleSerialize
+      #58: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpDeleteObject.ID
+      #59: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpGetObject.HandleSerialize
+      #60: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpGetObject.ID
+      #61: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpHeadObject.HandleSerialize
+      #62: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpHeadObject.ID
+      #63: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpPutObject.HandleSerialize
+      #64: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.awsRestxml_serializeOpPutObject.ID
+      #65: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.defaultS3ExpressCredentialsProvider.Retrieve
+      #66: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.disableHTTPSMiddleware.HandleFinalize
+      #67: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.disableHTTPSMiddleware.ID
+      #68: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.doChanRetrieve
+      #69: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getCreateSessionBucketMember
+      #70: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getDeleteObjectBucketMember
+      #71: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getGetObjectBucketMember
+      #72: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getGetObjectRequestValidationModeMember
+      #73: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getHeadObjectBucketMember
+      #74: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getIdentityMiddleware.HandleFinalize
+      #75: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getIdentityMiddleware.ID
+      #76: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getPutObjectBucketMember
+      #77: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.getPutObjectRequestAlgorithmMember
+      #78: internal/s3client/s3client.go:14:2: s3client.init calls s3.init
+      #79: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.isExpressUserAgent.HandleSerialize
+      #80: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.isExpressUserAgent.ID
+      #81: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.legacyEndpointContextSetter.HandleInitialize
+      #82: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.legacyEndpointContextSetter.ID
+      #83: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.newDefaultV4Signer
+      #84: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.newDefaultV4aSigner
+      #85: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.presignContextPolyfillMiddleware.HandleFinalize
+      #86: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.presignContextPolyfillMiddleware.ID
+      #87: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.putBucketContextMiddleware.HandleSerialize
+      #88: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.putBucketContextMiddleware.ID
+      #89: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveAuthSchemeMiddleware.HandleFinalize
+      #90: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveAuthSchemeMiddleware.ID
+      #91: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveEndpointV2Middleware.HandleFinalize
+      #92: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveEndpointV2Middleware.ID
+      #93: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveHTTPClient
+      #94: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveHTTPClient
+      #95: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveRetryer
+      #96: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.resolveRetryer
+      #97: cmd/server/main.go:29:2: server.main calls pgxpool.Pool.Close, which eventually calls s3.selectObjectContentEventStreamReader.safeClose
+      #98: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.serializeImmutableHostnameBucketMiddleware.HandleSerialize
+      #99: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.serializeImmutableHostnameBucketMiddleware.ID
+      #100: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.setLegacyContextSigningOptionsMiddleware.HandleFinalize
+      #101: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.setLegacyContextSigningOptionsMiddleware.ID
+      #102: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.setOperationInputMiddleware.HandleSerialize
+      #103: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.setOperationInputMiddleware.ID
+      #104: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.signRequestMiddleware.HandleFinalize
+      #105: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.signRequestMiddleware.ID
+      #106: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpCreateSession.HandleInitialize
+      #107: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpCreateSession.ID
+      #108: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpDeleteObject.HandleInitialize
+      #109: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpDeleteObject.ID
+      #110: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpGetObject.HandleInitialize
+      #111: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpGetObject.ID
+      #112: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpHeadObject.HandleInitialize
+      #113: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpHeadObject.ID
+      #114: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpPutObject.HandleInitialize
+      #115: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.validateOpPutObject.ID
+      #116: internal/s3client/s3client.go:58:41: s3client.New calls config.LoadDefaultConfig, which eventually calls s3.wrappedEndpointResolver.ResolveEndpoint
+      #117: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.BucketAlreadyExists.Error
+      #118: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.BucketAlreadyOwnedByYou.Error
+      #119: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.InvalidObjectState.Error
+      #120: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.NoSuchBucket.Error
+      #121: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.NoSuchKey.Error
+      #122: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.NoSuchUpload.Error
+      #123: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.NotFound.Error
+      #124: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.ObjectAlreadyInActiveTierError.Error
+      #125: internal/repo/identity_transfer.go:817:67: repo.Pool.InsertMigratedPost calls pgconn.ConnectError.Error, which eventually calls types.ObjectNotInActiveTierError.Error
+      #126: internal/s3client/s3client.go:14:2: s3client.init calls s3.init, which calls types.init
+
+Vulnerability #11: GO-2026-5026
+    Invoking failure to reject ASCII-only Punycode-encoded labels in
+    golang.org/x/net/idna
+  More info: https://pkg.go.dev/vuln/GO-2026-5026
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.53.0
+    Fixed in: golang.org/x/net@v0.55.0
+
+  Standard library
+    Found in: net/http@go1.26.5
+    Fixed in: net/http@go1.26.6
+    Example traces found:
+      #1: internal/fanclub/patreon/client.go:306:26: patreon.Client.ListCreatorCampaigns calls http.Client.Do
+      #2: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls http.Transport.CloseIdleConnections
+      #3: internal/s3client/s3client.go:113:40: s3client.Client.PresignPut calls s3.PresignClient.PresignPutObject, which eventually calls http.Transport.RoundTrip
+
+Vulnerability #12: GO-2026-5004
+    SQL Injection via placeholder confusion with dollar quoted string literals
+    in github.com/jackc/pgx
+  More info: https://pkg.go.dev/vuln/GO-2026-5004
+  Module: github.com/jackc/pgx/v5
+    Found in: github.com/jackc/pgx/v5@v5.6.0
+    Fixed in: github.com/jackc/pgx/v5@v5.9.2
+    Example traces found:
+      #1: internal/repo/repo.go:2262:25: repo.Pool.ListFeedFollowing calls pgxpool.Pool.Query, which eventually calls sanitize.SanitizeSQL
+
+Your code is affected by 12 vulnerabilities from 4 modules and the Go standard library.
+This scan also found 8 vulnerabilities in packages you import and 19
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.
+exit status 3

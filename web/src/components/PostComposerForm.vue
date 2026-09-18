@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import Button from "./ui/Button.vue";
+import EmptyState from "./ui/EmptyState.vue";
+import { computed, onMounted, ref, watch, useId } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { getAccessToken } from "../auth";
@@ -35,10 +37,13 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  submitted: [detail: { mode: PostComposerMode; communityId?: string | null }];
+  "reply-cancelled": [];
+  submitted: [detail: { mode: PostComposerMode; communityId?: string | null; id: string; scheduled: boolean }];
 }>();
 
 const { t } = useI18n();
+const advancedOpen = ref(false);
+const formId = useId();
 const modeRef = computed(() => props.mode);
 const communityIdRef = computed(() => props.communityId);
 const patreonEnabledRef = computed(() => props.patreonEnabled);
@@ -49,7 +54,7 @@ const composer = usePostComposerForm({
   communityId: communityIdRef,
   patreonEnabled: patreonEnabledRef,
   t,
-  onSubmitted: () => emit("submitted", detail.value),
+  onSubmitted: (result) => emit("submitted", {...detail.value, ...result}),
   eventDetail: () => detail.value,
 });
 
@@ -178,14 +183,14 @@ defineExpose({
         <button
           type="button"
           class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium text-lime-800 hover:bg-lime-100"
-          @click="cancelReply"
+          @click="cancelReply(); emit('reply-cancelled')"
         >
           {{ $t("views.compose.cancel") }}
         </button>
       </div>
       <label class="sr-only">{{ $t("views.compose.caption") }}</label>
       <textarea
-        ref="composerCaptionEl"
+        ref="composerCaptionEl" :aria-label="$t('views.compose.caption')"
         v-model="caption"
         rows="3"
         :placeholder="
@@ -207,7 +212,7 @@ defineExpose({
               type="file"
               :accept="SAFE_MEDIA_ACCEPT"
               multiple
-              class="hidden"
+              class="sr-only"
               :disabled="attachmentPickerDisabled"
               @change="onFilesSelect"
             />
@@ -215,99 +220,108 @@ defineExpose({
             <Icon name="image" class="h-5 w-5" />
           </label>
           <ComposerEmojiPicker :disabled="busy" :viewer-handle="viewerHandle" @select="insertComposerEmoji" />
-          <button
-            type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            :class="(isNsfw || composerNsfwOpen) && 'bg-amber-50 text-amber-800'"
-            :title="composerNsfwOpen ? $t('views.compose.nsfwClose') : $t('views.compose.nsfwTitle')"
-            :aria-expanded="composerNsfwOpen"
-            aria-controls="composer-nsfw-panel"
-            @click="composerNsfwOpen = !composerNsfwOpen"
-          >
-            <span class="sr-only">{{ $t("views.compose.nsfwOpen") }}</span>
-            <Icon name="warning" class="h-5 w-5" />
-          </button>
+          <Button variant="secondary" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">{{ $t('ux.moreOptions') }}</Button>
           <button
             v-if="!isCommunityMode"
             type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            :class="((viewPassword || viewPasswordConfirm) || composerPasswordOpen) && 'bg-neutral-200/80 text-neutral-900'"
-            :title="composerPasswordOpen ? $t('views.compose.passwordClose') : $t('views.compose.passwordTitle')"
-            :aria-expanded="composerPasswordOpen"
-            aria-controls="composer-password-panel"
-            @click="composerPasswordOpen = !composerPasswordOpen"
-          >
-            <span class="sr-only">{{ $t("views.compose.passwordOpen") }}</span>
-            <Icon name="lock" class="h-5 w-5" />
-          </button>
-          <button
-            v-if="fanclubComposerEnabled"
-            type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            :class="(membershipUsePatreon || composerMembershipOpen) && 'bg-sky-50 text-sky-800'"
-            :title="composerMembershipOpen ? $t('views.compose.membershipClose') : $t('views.compose.membershipTitle')"
-            :aria-expanded="composerMembershipOpen"
-            aria-controls="feed-composer-membership-panel"
-            @click="composerMembershipOpen = !composerMembershipOpen"
-          >
-            <span class="sr-only">{{ $t("views.compose.membershipOpen") }}</span>
-            <Icon name="user" class="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            :class="composerPollOpen && 'bg-lime-50 text-lime-800'"
-            :title="$t('views.compose.pollTitle')"
-            :aria-pressed="composerPollOpen"
-            @click="composerPollOpen = !composerPollOpen"
-          >
-            <span class="sr-only">{{ $t("views.compose.pollOpen") }}</span>
-            <Icon name="chart" class="h-5 w-5" />
-          </button>
-          <button
-            v-if="!isCommunityMode"
-            type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            :class="(composerScheduleOpen || scheduleLocal) && 'bg-violet-50 text-violet-800'"
-            :title="composerScheduleOpen ? $t('views.compose.scheduleClose') : $t('views.compose.scheduleTitle')"
-            :aria-expanded="composerScheduleOpen"
-            aria-controls="composer-schedule-panel"
-            @click="composerScheduleOpen = !composerScheduleOpen"
-          >
-            <span class="sr-only">{{ $t("views.compose.scheduleOpen") }}</span>
-            <Icon name="calendar" class="h-5 w-5" />
-          </button>
-          <button
-            v-if="!isCommunityMode"
-            type="button"
-            class="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
+            class="ui-button ui-button--secondary"
             :class="(composerVisibilityOpen || composerVisibility !== 'public') && 'bg-neutral-200/80 text-neutral-900'"
             :title="composerVisibilityOpen ? $t('views.compose.visibilityClose') : $t('views.compose.visibilityTitle', { label: composerVisibilityMeta(composerVisibility).label })"
             :aria-expanded="composerVisibilityOpen"
-            aria-controls="composer-visibility-panel"
+            :aria-controls="`${formId}-composer-visibility-panel`"
             @click="composerVisibilityOpen = !composerVisibilityOpen"
           >
-            <span class="sr-only">{{ $t("views.compose.visibilityOpen") }}</span>
+            <span class="sr-only">{{ $t("views.compose.visibilityOpen") }}</span><span class="ml-1 text-sm font-semibold">{{ composerVisibilityMeta(composerVisibility).label }}</span>
             <Icon name="eye" class="h-5 w-5" />
           </button>
           <span class="text-xs text-neutral-500">{{ composerAttachmentLabel(selectedFiles) }}</span>
         </div>
         <button
           type="button"
-          class="rounded-full bg-lime-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-lime-600 disabled:cursor-not-allowed disabled:opacity-50"
+          class="ui-button ui-button--primary"
           :disabled="busy"
           @click="submitPost"
         >
           {{ busy ? $t("views.compose.submitting") : $t("views.compose.submit") }}
         </button>
       </div>
+      <div class="ui-composer-summary mt-3" aria-live="polite">
+        <span v-if="isNsfw">{{ $t('views.compose.nsfwPostCheckbox') }}</span>
+        <span v-if="viewPassword">{{ $t('views.compose.passwordTitle') }}</span>
+        <span v-if="composerPollOpen">{{ $t('views.compose.pollTitle') }}</span>
+        <span v-if="scheduleLocal">{{ $t('views.compose.scheduleTitle') }}: {{ scheduleLocal }}</span>
+        <span v-if="membershipUsePatreon">{{ $t('views.compose.membershipTitle') }}</span>
+      </div>
+      <div v-show="advancedOpen" class="mt-3 flex flex-wrap gap-2"><button
+            type="button"
+            class="ui-button ui-button--secondary"
+            :class="(isNsfw || composerNsfwOpen) && 'bg-amber-50 text-amber-800'"
+            :title="composerNsfwOpen ? $t('views.compose.nsfwClose') : $t('views.compose.nsfwTitle')"
+            :aria-expanded="composerNsfwOpen"
+            :aria-controls="`${formId}-composer-nsfw-panel`"
+            @click="composerNsfwOpen = !composerNsfwOpen"
+          >
+            <span>{{ $t("views.compose.nsfwOpen") }}</span>
+            <Icon name="warning" class="h-5 w-5" />
+          </button>
+          <button
+            v-if="!isCommunityMode"
+            type="button"
+            class="ui-button ui-button--secondary"
+            :class="((viewPassword || viewPasswordConfirm) || composerPasswordOpen) && 'bg-neutral-200/80 text-neutral-900'"
+            :title="composerPasswordOpen ? $t('views.compose.passwordClose') : $t('views.compose.passwordTitle')"
+            :aria-expanded="composerPasswordOpen"
+            :aria-controls="`${formId}-composer-password-panel`"
+            @click="composerPasswordOpen = !composerPasswordOpen"
+          >
+            <span>{{ $t("views.compose.passwordOpen") }}</span>
+            <Icon name="lock" class="h-5 w-5" />
+          </button>
+          <button
+            v-if="fanclubComposerEnabled"
+            type="button"
+            class="ui-button ui-button--secondary"
+            :class="(membershipUsePatreon || composerMembershipOpen) && 'bg-sky-50 text-sky-800'"
+            :title="composerMembershipOpen ? $t('views.compose.membershipClose') : $t('views.compose.membershipTitle')"
+            :aria-expanded="composerMembershipOpen"
+            :aria-controls="`${formId}-feed-composer-membership-panel`"
+            @click="composerMembershipOpen = !composerMembershipOpen"
+          >
+            <span>{{ $t("views.compose.membershipOpen") }}</span>
+            <Icon name="user" class="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            class="ui-button ui-button--secondary"
+            :class="composerPollOpen && 'bg-lime-50 text-lime-800'"
+            :title="$t('views.compose.pollTitle')"
+            :aria-pressed="composerPollOpen"
+            @click="composerPollOpen = !composerPollOpen"
+          >
+            <span>{{ $t("views.compose.pollOpen") }}</span>
+            <Icon name="chart" class="h-5 w-5" />
+          </button>
+          <button
+            v-if="!isCommunityMode"
+            type="button"
+            class="ui-button ui-button--secondary"
+            :class="(composerScheduleOpen || scheduleLocal) && 'bg-violet-50 text-violet-800'"
+            :title="composerScheduleOpen ? $t('views.compose.scheduleClose') : $t('views.compose.scheduleTitle')"
+            :aria-expanded="composerScheduleOpen"
+            :aria-controls="`${formId}-composer-schedule-panel`"
+            @click="composerScheduleOpen = !composerScheduleOpen"
+          >
+            <span>{{ $t("views.compose.scheduleOpen") }}</span>
+            <Icon name="calendar" class="h-5 w-5" />
+          </button>
+          </div>
       <div v-if="composerPollOpen" class="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm">
         <p class="mb-2 text-xs font-medium text-neutral-700">{{ $t("views.compose.pollSectionTitle") }}</p>
         <div class="space-y-2">
           <div v-for="(_po, i) in pollOptionInputs" :key="i">
-            <label class="sr-only" :for="`poll-opt-${i}`">{{ $t("views.compose.pollOptionSrOnly", { n: i + 1 }) }}</label>
+            <label class="sr-only" :for="`${formId}-poll-opt-${i}`">{{ $t("views.compose.pollOptionSrOnly", { n: i + 1 }) }}</label>
             <input
-              :id="`poll-opt-${i}`"
+              :id="`${formId}-poll-opt-${i}`"
               v-model="pollOptionInputs[i]"
               type="text"
               maxlength="80"
@@ -325,9 +339,9 @@ defineExpose({
           {{ $t("views.compose.pollAddOption") }}
         </button>
         <div class="mt-3">
-          <label class="text-xs text-neutral-600" for="poll-dur">{{ $t("views.compose.pollDurationLabel") }}</label>
+          <label class="text-xs text-neutral-600" :for="`${formId}-poll-dur`">{{ $t("views.compose.pollDurationLabel") }}</label>
           <select
-            id="poll-dur"
+            :id="`${formId}-poll-dur`"
             v-model.number="pollDurationHours"
             class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none ring-lime-500 focus:ring-2"
           >
@@ -341,12 +355,12 @@ defineExpose({
       </div>
       <div
         v-if="!isCommunityMode && composerScheduleOpen"
-        id="composer-schedule-panel"
+        :id="`${formId}-composer-schedule-panel`"
         class="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm"
       >
-        <label class="text-xs font-medium text-neutral-700" for="schedule-at">{{ $t("views.compose.schedulePanelLabel") }}</label>
+        <label class="text-xs font-medium text-neutral-700" :for="`${formId}-schedule-at`">{{ $t("views.compose.schedulePanelLabel") }}</label>
         <input
-          id="schedule-at"
+          :id="`${formId}-schedule-at`"
           v-model="scheduleLocal"
           type="datetime-local"
           class="mt-1 w-full max-w-xs rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none ring-lime-500 focus:ring-2"
@@ -355,12 +369,12 @@ defineExpose({
       </div>
       <div
         v-if="!isCommunityMode && composerVisibilityOpen"
-        id="composer-visibility-panel"
+        :id="`${formId}-composer-visibility-panel`"
         class="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm"
       >
-        <label class="text-xs font-medium text-neutral-700" for="composer-visibility">{{ $t("views.compose.visibilitySelectLabel") }}</label>
+        <label class="text-xs font-medium text-neutral-700" :for="`${formId}-composer-visibility`">{{ $t("views.compose.visibilitySelectLabel") }}</label>
         <select
-          id="composer-visibility"
+          :id="`${formId}-composer-visibility`"
           v-model="composerVisibility"
           class="mt-1 w-full max-w-xs rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none ring-lime-500 focus:ring-2"
         >
@@ -378,7 +392,7 @@ defineExpose({
       >
         <div
           v-if="composerNsfwOpen"
-          id="composer-nsfw-panel"
+          :id="`${formId}-composer-nsfw-panel`"
           class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm"
         >
           <label class="inline-flex cursor-pointer items-center gap-2 text-neutral-800">
@@ -389,15 +403,15 @@ defineExpose({
         </div>
         <div
           v-if="!isCommunityMode && composerPasswordOpen"
-          id="composer-password-panel"
+          :id="`${formId}-composer-password-panel`"
           class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm"
         >
           <p class="mb-2 text-xs font-medium text-neutral-600">{{ $t("views.compose.passwordPanelIntro") }}</p>
           <div class="grid gap-2 sm:grid-cols-2">
             <div>
-              <label class="mb-0.5 block text-xs text-neutral-500" for="view-pw">{{ $t("views.compose.passwordFieldLabel") }}</label>
+              <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-view-pw`">{{ $t("views.compose.passwordFieldLabel") }}</label>
               <input
-                id="view-pw"
+                :id="`${formId}-view-pw`"
                 v-model="viewPassword"
                 type="password"
                 autocomplete="new-password"
@@ -407,9 +421,9 @@ defineExpose({
               />
             </div>
             <div>
-              <label class="mb-0.5 block text-xs text-neutral-500" for="view-pw2">{{ $t("views.compose.passwordConfirmLabel") }}</label>
+              <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-view-pw2`">{{ $t("views.compose.passwordConfirmLabel") }}</label>
               <input
-                id="view-pw2"
+                :id="`${formId}-view-pw2`"
                 v-model="viewPasswordConfirm"
                 type="password"
                 autocomplete="new-password"
@@ -488,7 +502,7 @@ defineExpose({
         </div>
         <div
           v-if="fanclubComposerEnabled && composerMembershipOpen"
-          id="feed-composer-membership-panel"
+          :id="`${formId}-feed-composer-membership-panel`"
           class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm"
         >
           <p class="text-xs font-medium text-neutral-700">{{ $t("views.compose.membershipTitle") }}</p>
@@ -527,9 +541,9 @@ defineExpose({
             <div v-if="membershipUsePatreon" class="mt-3 space-y-2">
               <div v-if="patreonCampaigns.length" class="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <label class="mb-0.5 block text-xs text-neutral-500" for="feed-mem-camp">{{ $t("views.compose.membershipPickCampaign") }}</label>
+                  <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-feed-mem-camp`">{{ $t("views.compose.membershipPickCampaign") }}</label>
                   <select
-                    id="feed-mem-camp"
+                    :id="`${formId}-feed-mem-camp`"
                     v-model="membershipCampaignId"
                     class="w-full rounded-xl border border-neutral-200 bg-white px-2 py-2 text-sm text-neutral-900"
                   >
@@ -538,9 +552,9 @@ defineExpose({
                   </select>
                 </div>
                 <div>
-                  <label class="mb-0.5 block text-xs text-neutral-500" for="feed-mem-tier">{{ $t("views.compose.membershipPickTier") }}</label>
+                  <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-feed-mem-tier`">{{ $t("views.compose.membershipPickTier") }}</label>
                   <select
-                    id="feed-mem-tier"
+                    :id="`${formId}-feed-mem-tier`"
                     v-model="membershipTierId"
                     :disabled="!membershipCampaignId"
                     class="w-full rounded-xl border border-neutral-200 bg-white px-2 py-2 text-sm text-neutral-900 disabled:opacity-50"
@@ -554,9 +568,9 @@ defineExpose({
               </div>
               <div v-else class="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <label class="mb-0.5 block text-xs text-neutral-500" for="feed-mem-cid">{{ $t("views.compose.membershipCampaign") }}</label>
+                  <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-feed-mem-cid`">{{ $t("views.compose.membershipCampaign") }}</label>
                   <input
-                    id="feed-mem-cid"
+                    :id="`${formId}-feed-mem-cid`"
                     v-model="membershipCampaignId"
                     type="text"
                     autocomplete="off"
@@ -564,9 +578,9 @@ defineExpose({
                   />
                 </div>
                 <div>
-                  <label class="mb-0.5 block text-xs text-neutral-500" for="feed-mem-tid">{{ $t("views.compose.membershipTier") }}</label>
+                  <label class="mb-0.5 block text-xs text-neutral-500" :for="`${formId}-feed-mem-tid`">{{ $t("views.compose.membershipTier") }}</label>
                   <input
-                    id="feed-mem-tid"
+                    :id="`${formId}-feed-mem-tid`"
                     v-model="membershipTierId"
                     type="text"
                     autocomplete="off"
@@ -583,7 +597,7 @@ defineExpose({
           <GlipzVideoPlayer :src="previewUrls[0]!" />
           <button
             type="button"
-            class="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white hover:bg-black/80"
+            class="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white hover:bg-black/80"
             :disabled="busy"
             :aria-label="$t('views.compose.removeImageAria', { n: 1 })"
             @click="removeImage(0)"
@@ -595,7 +609,7 @@ defineExpose({
           <GlipzAudioPlayer :src="previewUrls[0]!" />
           <button
             type="button"
-            class="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-sm font-bold text-white hover:bg-black/70"
+            class="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-sm font-bold text-white hover:bg-black/70"
             :disabled="busy"
             :aria-label="$t('views.compose.removeImageAria', { n: 1 })"
             @click="removeImage(0)"
@@ -612,7 +626,7 @@ defineExpose({
             <img :src="url" :alt="$t('views.compose.selectedImageAlt', { n: i + 1 })" class="h-full w-full object-cover" />
             <button
               type="button"
-              class="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white hover:bg-black/80"
+              class="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white hover:bg-black/80"
               :disabled="busy"
               :aria-label="$t('views.compose.removeImageAria', { n: i + 1 })"
               @click="removeImage(i)"
@@ -622,7 +636,7 @@ defineExpose({
           </div>
         </div>
       </div>
-      <p v-if="err" class="mt-3 text-sm text-red-600">{{ err }}</p>
+      <p role="alert" v-if="err" class="mt-3 text-sm text-red-600">{{ err }}</p>
     </div>
   </div>
 </template>

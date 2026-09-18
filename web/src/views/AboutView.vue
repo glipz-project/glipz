@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { RouterLink, useRouter } from "vue-router";
 import logoDarkImg from "../assets/glipz-dark.png";
 import logoLightImg from "../assets/glipz-light.png";
+import EmptyState from "../components/ui/EmptyState.vue";
 import PostTimeline from "../components/PostTimeline.vue";
 import { getOperatorAnnouncements } from "../data/operatorAnnouncements";
 import { setLocale, supportedLocaleOptions, type AppLocale } from "../i18n";
@@ -135,7 +136,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="w-full min-w-0 px-4 py-8 text-neutral-900 sm:px-6 lg:px-8">
+  <div class="about-page w-full min-w-0 px-0 py-0 text-neutral-900 sm:px-4 lg:px-8">
     <div class="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <RouterLink
@@ -143,9 +144,9 @@ onBeforeUnmount(() => {
           class="flex shrink-0 items-center hover:opacity-90"
           aria-label="Glipz ホーム"
         >
-          <img :src="logoImg" alt="Glipz" class="h-12 w-auto max-h-14 object-contain object-left sm:h-14" />
+          <img :src="logoImg" alt="Glipz" class="h-10 w-auto max-h-14 object-contain object-left sm:h-14" />
         </RouterLink>
-        <div class="min-w-[11rem]">
+        <div class="w-36 sm:w-44">
           <label class="sr-only" for="about-locale-select">{{ $t("app.locale.heading") }}</label>
           <select
             id="about-locale-select"
@@ -160,39 +161,28 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <section class="overflow-hidden rounded-[2rem] border border-lime-200 bg-white dark:border-lime-800/70 dark:bg-neutral-950">
-        <div class="grid gap-8 px-6 py-10 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_24rem] lg:items-center lg:px-10">
+      <section class="overflow-hidden rounded-2xl border border-lime-200 bg-white dark:border-lime-800/70 dark:bg-neutral-950">
+        <div class="grid gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_24rem] lg:items-start lg:px-10">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold uppercase tracking-[0.2em] text-lime-700">{{ $t("about.badge") }}</p>
-            <h1 class="mt-4 text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl">
+            <h1 class="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
               {{ ($tm("about.title") as string[])[0] }}
-              <br />
+              <br class="hidden sm:block" />
               {{ ($tm("about.title") as string[])[1] }}
             </h1>
             <p class="mt-5 max-w-2xl text-sm leading-7 text-neutral-700 sm:text-base">
-              {{ $t("about.description") }}
+              {{ $t("ux.aboutLead") }}
             </p>
-            <div class="mt-6 max-w-2xl rounded-3xl border border-lime-300 bg-lime-50/80 p-5 dark:border-lime-800/70 dark:bg-lime-950/20">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700 dark:text-lime-300">
-                {{ $t("about.activityPubDifference.badge") }}
-              </p>
-              <h2 class="mt-2 text-xl font-bold text-lime-900 dark:text-lime-200">
-                {{ $t("about.activityPubDifference.title") }}
-              </h2>
-              <p class="mt-3 text-sm leading-7 text-lime-900/90 dark:text-lime-100/90 sm:text-base">
-                {{ $t("about.activityPubDifference.body") }}
-              </p>
-            </div>
             <div class="mt-6 flex flex-wrap gap-3">
               <RouterLink
                 to="/register"
-                class="inline-flex items-center justify-center rounded-full bg-lime-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-lime-600"
+                class="ui-button ui-button--primary"
               >
                 {{ $t("common.actions.createAccount") }}
               </RouterLink>
               <RouterLink
                 to="/login"
-                class="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+                class="ui-button ui-button--secondary"
               >
                 {{ $t("common.actions.login") }}
               </RouterLink>
@@ -208,7 +198,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="flex h-[26rem] min-h-0 flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white/90 shadow-sm dark:border-neutral-200 dark:bg-neutral-900/90">
+          <div  :class="publicTimelineItems.length ? 'max-h-[32rem]' : ''" class="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white/90 shadow-sm dark:border-neutral-200 dark:bg-neutral-900/90">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4 dark:border-neutral-200">
               <div>
                 <p class="text-sm font-semibold text-neutral-900">{{ $t("about.publicTimeline.title") }}</p>
@@ -219,14 +209,10 @@ onBeforeUnmount(() => {
               </RouterLink>
             </div>
             <div class="min-h-0 flex-1">
-              <p v-if="publicTimelineError" class="px-5 py-4 text-sm text-red-600">{{ publicTimelineError }}</p>
-              <p v-else-if="publicTimelineLoading && !publicTimelineItems.length" class="px-5 py-4 text-sm text-neutral-600">
-                {{ $t("about.publicTimeline.loading") }}
-              </p>
-              <p v-else-if="!publicTimelineItems.length" class="px-5 py-4 text-sm text-neutral-600">
-                {{ $t("about.publicTimeline.empty") }}
-              </p>
-              <div v-else class="h-full overflow-y-auto">
+              <EmptyState v-if="publicTimelineError" :title="publicTimelineError" :action-label="$t('ux.retry')" @action="loadPublicTimeline" />
+              <EmptyState v-else-if="publicTimelineLoading && !publicTimelineItems.length" :title="$t('about.publicTimeline.loading')" busy />
+              <EmptyState v-else-if="!publicTimelineItems.length" :title="$t('about.publicTimeline.empty')" :description="$t('ux.emptyPublic')" />
+              <div v-else class="max-h-[26rem] overflow-y-auto">
                 <PostTimeline
                   :items="publicTimelineItems"
                   :action-busy="null"
@@ -241,6 +227,20 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
+      </section>
+
+      <section aria-label="Glipz">
+            <div class="mt-6 max-w-2xl rounded-3xl border border-lime-300 bg-lime-50/80 p-5 dark:border-lime-800/70 dark:bg-lime-950/20">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700 dark:text-lime-300">
+                {{ $t("about.activityPubDifference.badge") }}
+              </p>
+              <h2 class="mt-2 text-xl font-bold text-lime-900 dark:text-lime-200">
+                {{ $t("about.activityPubDifference.title") }}
+              </h2>
+              <p class="mt-3 text-sm leading-7 text-lime-900/90 dark:text-lime-100/90 sm:text-base">
+                {{ $t("about.activityPubDifference.body") }}
+              </p>
+            </div>
       </section>
 
       <section class="grid gap-4 md:grid-cols-3">
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
         </article>
       </section>
 
-      <section class="rounded-[2rem] border border-lime-200 bg-lime-50/70 px-6 py-8 text-center dark:border-lime-800/70 dark:bg-neutral-900 sm:px-8">
+      <section class="rounded-2xl border border-lime-200 bg-lime-50/70 px-6 py-8 text-center dark:border-lime-800/70 dark:bg-neutral-900 sm:px-8">
         <h2 class="text-2xl font-semibold text-neutral-900">{{ $t("about.cta.title") }}</h2>
         <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-neutral-700 sm:text-base">
           {{ $t("about.cta.description") }}
@@ -329,13 +329,13 @@ onBeforeUnmount(() => {
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
           <RouterLink
             to="/register"
-            class="inline-flex items-center justify-center rounded-full bg-lime-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-lime-600"
+            class="ui-button ui-button--primary"
           >
             {{ $t("common.actions.startNow") }}
           </RouterLink>
           <RouterLink
             to="/login"
-            class="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+            class="ui-button ui-button--secondary"
           >
             {{ $t("common.actions.login") }}
           </RouterLink>

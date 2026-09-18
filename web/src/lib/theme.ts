@@ -1,3 +1,4 @@
+import { readableForeground } from "./contrast";
 export type ThemePreference = "default" | "pink" | "orange" | "blue" | "violet";
 export type ThemeModePreference = "system" | "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
@@ -60,7 +61,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     dark: {
       background: "#171717",
       surface: "#262626",
-      surfaceMuted: "#262626",
+      surfaceMuted: "#303030",
       text: "#fafafa",
       textMuted: "#d4d4d4",
       accentSoft: "#365314",
@@ -271,7 +272,7 @@ export function applyTheme(
     document.documentElement.classList.add("theme-preset");
     document.documentElement.style.colorScheme = resolved;
     for (const [key, variable] of Object.entries(THEME_CSS_VARS) as Array<[keyof ThemePalette, string]>) {
-      document.documentElement.style.setProperty(variable, hexToRgbTriplet(palette[key]));
+      document.documentElement.style.setProperty(variable, hexToRgbTriplet(key === "accentContrast" ? readableForeground(palette.accentStrong, palette.accentContrast) : palette[key]));
     }
   }
   return resolved;

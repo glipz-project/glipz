@@ -7,6 +7,11 @@ import { applySeoMeta } from "../lib/seo";
 
 export const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, from, saved) {
+    if (saved) return saved;
+    if (to.hash) return { el: to.hash };
+    return to.path !== from.path ? { top: 0 } : false;
+  },
   routes: [
     { path: "/", redirect: () => (getAccessToken() ? "/feed" : isNativeApp() ? "/login" : "/about") },
     {
@@ -86,7 +91,7 @@ export const router = createRouter({
     {
       path: "/communities/:id",
       component: () => import("../views/CommunityDetailView.vue"),
-      meta: { requiresAuth: false, containedMainScroll: true, mobileEdgeToEdge: true, titleKey: "routes.communityDetail" },
+      meta: { requiresAuth: false, mobileEdgeToEdge: true, titleKey: "routes.communityDetail" },
     },
     {
       path: "/compose",

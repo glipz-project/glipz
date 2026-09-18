@@ -944,7 +944,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-neutral-50">
+  <section class="ui-messages flex h-full min-h-0 w-full flex-col overflow-hidden bg-neutral-50">
     <div v-if="showOverviewHeader" class="border-b border-neutral-200 bg-white px-5 py-4">
       <h1 class="text-lg font-semibold text-neutral-900">{{ $t("views.messages.title") }}</h1>
       <p class="mt-1 text-sm text-neutral-500">
@@ -994,7 +994,7 @@ onBeforeUnmount(() => {
                   <span class="truncate text-sm font-semibold text-neutral-900">{{ thread.peer_display_name }}</span>
                   <UserBadges :badges="thread.peer_badges" size="xs" />
                   <span v-if="thread.unread_count > 0" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center whitespace-nowrap rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white">
-                    {{ thread.unread_count > 99 ? "99+" : thread.unread_count }}
+                    <span class="sr-only">{{ $t('ux.unread') }}</span>{{ thread.unread_count > 99 ? "99+" : thread.unread_count }}
                   </span>
                 </span>
                 <span class="block truncate text-xs text-neutral-500">@{{ thread.peer_handle }}</span>
@@ -1032,7 +1032,7 @@ onBeforeUnmount(() => {
         class="min-h-0 flex-1 flex-col overflow-hidden"
         :class="showMessagePane ? 'flex' : 'hidden lg:flex'"
       >
-        <div v-if="error" class="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+        <div role="alert" v-if="error" class="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
           {{ error }}
         </div>
         <div v-if="keyPinWarning" class="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">

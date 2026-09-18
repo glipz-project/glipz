@@ -1507,8 +1507,8 @@ watch(handleParam, () => void loadAll());
         </p>
         <div class="mt-4 space-y-3">
           <div>
-            <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.displayNameLabel") }}</label>
-            <input
+            <label for="userprofileview-field-1" class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.displayNameLabel") }}</label>
+            <input id="userprofileview-field-1"
               v-model="editDisplayName"
               type="text"
               maxlength="50"
@@ -1540,8 +1540,8 @@ watch(handleParam, () => void loadAll());
             </p>
           </div>
           <div>
-            <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.bioLabel") }}</label>
-            <textarea
+            <label for="userprofileview-field-2" class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.bioLabel") }}</label>
+            <textarea id="userprofileview-field-2"
               v-model="editBio"
               rows="4"
               maxlength="500"

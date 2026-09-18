@@ -20,13 +20,10 @@ const remoteMediaProxyCacheControl = "public, max-age=3600"
 const protectedMediaDownloadBody = "This media is protected by Glipz.\n"
 
 func (s *Server) mediaProxyBaseURL() string {
-	if base := strings.TrimSpace(s.cfg.GlipzProtocolMediaPublicBase); base != "" {
-		return strings.TrimSuffix(base, "/")
-	}
 	if origin := strings.TrimSpace(s.federationPublicOrigin()); origin != "" {
 		return strings.TrimSuffix(origin, "/") + "/api/v1/media/object"
 	}
-	return ""
+	return "/api/v1/media/object"
 }
 
 func (s *Server) glipzProtocolPublicMediaURL(objectKey string) string {
@@ -268,6 +265,9 @@ func (s *Server) handlePublicRemoteMediaProxy(w http.ResponseWriter, r *http.Req
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_url"})
 		return
 	}
+	if !s.signViewerMediaRequest(w, r, req) {
+		return
+	}
 	if accept := strings.TrimSpace(r.Header.Get("Accept")); accept != "" {
 		req.Header.Set("Accept", accept)
 	} else {
@@ -300,6 +300,10 @@ func (s *Server) handlePublicRemoteMediaProxy(w http.ResponseWriter, r *http.Req
 	}
 
 	copyRemoteMediaProxyHeaders(w, res.Header)
+	if u.Query().Get("glipz_viewer") != "" {
+		w.Header().Set("Cache-Control", "private, no-store")
+		w.Header().Set("Vary", "Cookie, Authorization")
+	}
 	w.WriteHeader(res.StatusCode)
 	if r.Method == http.MethodHead {
 		return
@@ -317,6 +321,8 @@ func (s *Server) handlePublicRemoteMediaProxy(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handlePublicMediaObject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Vary", "Cookie, Authorization")
 	rawKey := strings.TrimSpace(chi.URLParam(r, "*"))
 	if rawKey == "" {
 		http.NotFound(w, r)
@@ -333,26 +339,17 @@ func (s *Server) handlePublicMediaObject(w http.ResponseWriter, r *http.Request)
 		http.NotFound(w, r)
 		return
 	}
-	if !publicMediaInlineRequestAllowed(r) {
-		writeProtectedMediaDecoy(w, r)
+	allowed, err := s.canReadMedia(r, objectKey)
+	if err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "media_authorization_unavailable"})
 		return
 	}
-	if s.cfg.MediaProxyMode == "direct" {
-		meta, err := s.s3.HeadObject(r.Context(), objectKey)
-		if err != nil {
-			switch {
-			case s3client.IsNotFound(err):
-				http.NotFound(w, r)
-			default:
-				writeServerError(w, "media direct head", err)
-			}
-			return
-		}
-		if !shouldDownloadMediaContentType(meta.ContentType) {
-			http.Redirect(w, r, s.localMediaDirectURL(objectKey), http.StatusTemporaryRedirect)
-			return
-		}
+	if !allowed {
+		http.NotFound(w, r)
+		return
 	}
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Vary", "Cookie, Authorization")
 
 	switch r.Method {
 	case http.MethodHead:
@@ -366,6 +363,7 @@ func (s *Server) handlePublicMediaObject(w http.ResponseWriter, r *http.Request)
 			}
 			return
 		}
+		meta.CacheControl = "private, no-store"
 		writeMediaProxyHeaders(w, meta)
 		w.WriteHeader(http.StatusOK)
 		return
@@ -383,6 +381,7 @@ func (s *Server) handlePublicMediaObject(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		defer obj.Body.Close()
+		obj.CacheControl = "private, no-store"
 		writeMediaProxyHeaders(w, obj.ObjectMeta)
 		status := http.StatusOK
 		if obj.ContentRange != "" {

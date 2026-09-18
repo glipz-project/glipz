@@ -59,12 +59,25 @@ func (s *Server) handleFederationDMAttachmentProxy(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if strings.HasPrefix(u.Path, "/api/v1/media/object/") {
+		user, err := s.db.UserByID(r.Context(), uid)
+		if err != nil {
+			writeServerError(w, "DM attachment viewer", err)
+			return
+		}
+		q := u.Query()
+		q.Set("glipz_viewer", s.localFullAcct(user.Handle))
+		u.RawQuery = q.Encode()
+	}
 	req, err := http.NewRequestWithContext(r.Context(), "GET", u.String(), nil)
 	if err != nil {
 		writeServerError(w, "NewRequestWithContext attachment", err)
 		return
 	}
 	req.Header.Set("Accept", "*/*")
+	if u.Query().Get("glipz_viewer") != "" {
+		s.signMediaRequest(req)
+	}
 
 	// Use the shared federation client (timeout, redirects, etc).
 	res, err := federationHTTP.Do(req)

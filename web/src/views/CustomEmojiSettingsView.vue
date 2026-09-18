@@ -138,7 +138,7 @@ onMounted(async () => {
       <p class="mt-2 text-sm text-neutral-600">{{ $t("views.customEmojiSettings.description") }}</p>
     </header>
 
-    <p v-if="error" class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>
+    <p role="alert" v-if="error" class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>
     <p v-if="notice" class="mt-4 rounded border border-lime-200 bg-lime-50 px-3 py-2 text-sm text-lime-800">{{ notice }}</p>
     <p v-if="loading" class="mt-6 text-sm text-neutral-500">{{ $t("views.customEmojiSettings.loading") }}</p>
 

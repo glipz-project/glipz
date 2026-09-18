@@ -231,7 +231,7 @@ onMounted(async () => {
       <p class="mt-2 text-sm leading-relaxed text-neutral-600">{{ $t("views.timelineSettings.lead") }}</p>
     </div>
 
-    <p v-if="message" class="mt-4 rounded-xl border border-lime-200 bg-lime-50 px-4 py-3 text-sm text-lime-900">
+    <p role="status" v-if="message" class="mt-4 rounded-xl border border-lime-200 bg-lime-50 px-4 py-3 text-sm text-lime-900">
       {{ message }}
     </p>
     <p v-if="loading || saving" class="mt-4 text-sm text-neutral-500">
