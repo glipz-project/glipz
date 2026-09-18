@@ -490,7 +490,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-0 h-full w-full min-w-0 text-neutral-900">
+  <div class="w-full min-w-0 text-neutral-900">
     <p
       v-if="toast"
       class="fixed right-4 top-20 z-[150] max-w-sm rounded-lg border border-lime-200 bg-white px-3 py-2 text-sm text-neutral-900 shadow-md"
@@ -707,7 +707,7 @@ watch(
         role="dialog"
         aria-modal="true"
         aria-labelledby="follow-modal-title"
-        class="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl"
+        class="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-5 shadow-xl"
         @click.stop
       >
         <h2 id="follow-modal-title" class="text-lg font-semibold text-neutral-900">{{ t("views.remoteFederationProfile.followModalTitle") }}</h2>

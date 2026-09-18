@@ -120,7 +120,7 @@ const rootClass = computed(() =>
     ? "composer-anchor flex gap-3"
     : props.layout === "modal"
     ? "composer-anchor flex gap-3 px-4 py-4"
-    : "composer-anchor hidden gap-3 border-b border-neutral-200 px-4 py-3 lg:flex",
+    : "composer-anchor flex gap-3",
 );
 const visibilityOptions = computed<Array<{ value: ComposerVisibility; label: string; description: string }>>(() => [
   { value: "public", label: t("views.compose.visibility.public.label"), description: t("views.compose.visibility.public.description") },
@@ -157,7 +157,7 @@ defineExpose({
 </script>
 
 <template>
-  <div :class="rootClass">
+  <div class="ui-composer" :class="rootClass">
     <div
       class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lime-500 text-xs font-bold text-white"
       aria-hidden="true"
@@ -171,10 +171,10 @@ defineExpose({
       />
       <span v-else>{{ viewerEmail ? avatarInitials(viewerEmail) : "?" }}</span>
     </div>
-    <div class="min-w-0 flex-1">
+    <div class="ui-composer-body min-w-0 flex-1">
       <div
         v-if="replyingTo"
-        class="mb-2 flex items-center justify-between gap-2 rounded-lg border border-lime-200 bg-lime-50/80 px-3 py-2 text-sm text-neutral-800"
+        class="ui-composer-reply mb-2 flex items-center justify-between gap-2 rounded-lg border border-lime-200 bg-lime-50/80 px-3 py-2 text-sm text-neutral-800"
       >
         <span class="min-w-0 truncate">
           <span class="text-neutral-500">{{ $t("views.compose.replyTo") }}</span>
@@ -192,7 +192,7 @@ defineExpose({
       <textarea
         ref="composerCaptionEl" :aria-label="$t('views.compose.caption')"
         v-model="caption"
-        rows="3"
+        rows="2"
         :placeholder="
           replyingTo
             ? $t('views.compose.replyPlaceholder', { handle: handleAt(replyingTo) })
@@ -202,7 +202,7 @@ defineExpose({
         "
         class="w-full resize-none border-0 bg-transparent text-xl text-neutral-900 placeholder:text-neutral-500 focus:ring-0"
       />
-      <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-200 pt-3">
+      <div class="ui-composer-toolbar mt-2 flex flex-wrap items-center justify-between gap-2 pt-2">
         <div class="flex flex-wrap items-center gap-1">
           <label
             class="inline-flex cursor-pointer items-center rounded-full p-2 text-lime-600 hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -220,21 +220,21 @@ defineExpose({
             <Icon name="image" class="h-5 w-5" />
           </label>
           <ComposerEmojiPicker :disabled="busy" :viewer-handle="viewerHandle" @select="insertComposerEmoji" />
-          <Button variant="secondary" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">{{ $t('ux.moreOptions') }}</Button>
+          <Button variant="ghost" class="ui-icon-button" :aria-label="$t('ux.moreOptions')" :title="$t('ux.moreOptions')" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen"><Icon name="ellipsis" class="h-5 w-5" /></Button>
           <button
             v-if="!isCommunityMode"
             type="button"
-            class="ui-button ui-button--secondary"
+            class="ui-button ui-icon-button ui-button--ghost"
             :class="(composerVisibilityOpen || composerVisibility !== 'public') && 'bg-neutral-200/80 text-neutral-900'"
             :title="composerVisibilityOpen ? $t('views.compose.visibilityClose') : $t('views.compose.visibilityTitle', { label: composerVisibilityMeta(composerVisibility).label })"
             :aria-expanded="composerVisibilityOpen"
             :aria-controls="`${formId}-composer-visibility-panel`"
             @click="composerVisibilityOpen = !composerVisibilityOpen"
           >
-            <span class="sr-only">{{ $t("views.compose.visibilityOpen") }}</span><span class="ml-1 text-sm font-semibold">{{ composerVisibilityMeta(composerVisibility).label }}</span>
+            <span class="sr-only">{{ $t("views.compose.visibilityOpen") }}</span><span class="sr-only">{{ composerVisibilityMeta(composerVisibility).label }}</span>
             <Icon name="eye" class="h-5 w-5" />
           </button>
-          <span class="text-xs text-neutral-500">{{ composerAttachmentLabel(selectedFiles) }}</span>
+          <span v-if="selectedFiles.length" class="text-xs text-neutral-500">{{ composerAttachmentLabel(selectedFiles) }}</span>
         </div>
         <button
           type="button"

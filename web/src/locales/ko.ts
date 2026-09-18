@@ -73,7 +73,7 @@ export const koOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "Glipz에서 사용하는 익숙한 라임 테마입니다.",
+          description: "짙은 남색 텍스트와 따뜻한 주황색을 사용한 깔끔한 기본 테마입니다.",
         },
         pink: {
           label: "핑크",

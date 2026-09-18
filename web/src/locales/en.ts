@@ -73,7 +73,7 @@ export const enOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "The familiar lime theme used by Glipz.",
+          description: "A clean default theme with navy text and warm orange accents.",
         },
         pink: {
           label: "Pink",

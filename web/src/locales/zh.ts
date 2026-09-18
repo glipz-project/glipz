@@ -74,7 +74,7 @@ export const zhOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "Glipz 熟悉的青柠色主题。",
+          description: "采用深蓝色文字与暖橙色点缀的简洁默认主题。",
         },
         pink: {
           label: "粉色",

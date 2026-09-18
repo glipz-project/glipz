@@ -49,7 +49,7 @@ const safeHtml = (value: string) => sanitizeInlineHtml(value);
     <div class="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <RouterLink :to="backLink.to.value" class="text-sm font-medium text-lime-700 hover:text-lime-800" @click="backLink.onClick">{{ backLink.label }}</RouterLink>
 
-      <section class="overflow-hidden rounded-[2rem] border border-lime-200 bg-white dark:border-lime-800/70 dark:bg-neutral-950">
+      <section class="overflow-hidden rounded-[2rem] border border-lime-200 bg-white">
         <div class="grid gap-8 px-6 py-10 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_24rem] lg:items-center lg:px-10">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold uppercase tracking-[0.2em] text-lime-700">{{ $t("federationGuidelines.badge") }}</p>
@@ -62,14 +62,14 @@ const safeHtml = (value: string) => sanitizeInlineHtml(value);
               {{ $t("federationGuidelines.description", { protocol: FEDERATION_PROTOCOL_VERSION }) }}
             </p>
             <div class="mt-6 flex flex-wrap gap-2 text-xs text-neutral-600">
-              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1 dark:border-neutral-200 dark:bg-neutral-900">App {{ APP_VERSION }}</span>
-              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1 dark:border-neutral-200 dark:bg-neutral-900">{{ $t("common.labels.protocol") }} {{ FEDERATION_PROTOCOL_VERSION }}</span>
-              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1 dark:border-neutral-200 dark:bg-neutral-900">{{ $t("federationGuidelines.eventSchemaLabel") }}</span>
-              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1 dark:border-neutral-200 dark:bg-neutral-900">{{ $t("common.labels.updated", { date: "2026-04-22" }) }}</span>
+              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1">App {{ APP_VERSION }}</span>
+              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1">{{ $t("common.labels.protocol") }} {{ FEDERATION_PROTOCOL_VERSION }}</span>
+              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1">{{ $t("federationGuidelines.eventSchemaLabel") }}</span>
+              <span class="rounded-full border border-neutral-200 bg-white px-3 py-1">{{ $t("common.labels.updated", { date: "2026-04-22" }) }}</span>
             </div>
           </div>
 
-          <div class="rounded-3xl border border-neutral-200 bg-white/90 p-5 shadow-sm dark:border-neutral-200 dark:bg-neutral-900/90">
+          <div class="rounded-xl border border-neutral-200 bg-white/90 p-5 shadow-sm">
             <p class="text-sm font-semibold text-neutral-900">{{ $t("federationGuidelines.overviewTitle") }}</p>
             <ul class="mt-4 space-y-3 text-sm leading-7 text-neutral-700">
               <li v-for="point in overviewPoints" :key="point" class="flex gap-3">
@@ -77,14 +77,14 @@ const safeHtml = (value: string) => sanitizeInlineHtml(value);
                 <span>{{ point }}</span>
               </li>
             </ul>
-            <div class="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-700 dark:border-neutral-200 dark:bg-neutral-800">
+            <div class="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-700">
               {{ $t("federationGuidelines.overviewNote") }}
             </div>
           </div>
         </div>
       </section>
 
-      <section class="rounded-[2rem] border border-neutral-200 bg-white px-6 py-8 dark:border-neutral-200 dark:bg-neutral-950 sm:px-8">
+      <section class="rounded-[2rem] border border-neutral-200 bg-white px-6 py-8 sm:px-8">
         <div class="space-y-8">
           <section>
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.supportTitle") }}</h2>
@@ -96,7 +96,7 @@ const safeHtml = (value: string) => sanitizeInlineHtml(value);
             </ul>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.versionPolicyTitle") }}</h2>
             <ul class="mt-4 space-y-3 text-sm leading-7 text-neutral-700">
               <li v-for="item in versionPolicyItems" :key="item" class="flex gap-3">
@@ -106,19 +106,19 @@ const safeHtml = (value: string) => sanitizeInlineHtml(value);
             </ul>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.premiseTitle") }}</h2>
             <p v-for="paragraph in premiseParagraphs" :key="paragraph" class="mt-3 text-sm leading-7 text-neutral-700">
               {{ paragraph }}
             </p>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.endpointTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.endpointDescription") }}
             </p>
-            <div class="mt-4 overflow-x-auto rounded-2xl bg-neutral-900 p-4 text-xs text-lime-100">
+            <div class="mt-4 overflow-x-auto rounded-xl bg-neutral-900 p-4 text-xs text-lime-100">
               <pre>GET  {{ publicOriginExample }}/.well-known/glipz-federation
 GET  {{ publicOriginExample }}/federation/profile/{handle}
 GET  {{ publicOriginExample }}/federation/dm-keys/{handle}
@@ -139,10 +139,10 @@ POST {{ publicOriginExample }}/federation/events</pre>
             </p>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.discoveryTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">{{ $t("federationGuidelines.discoveryDescription") }}</p>
-            <div class="mt-4 overflow-x-auto rounded-2xl bg-neutral-900 p-4 text-xs text-lime-100">
+            <div class="mt-4 overflow-x-auto rounded-xl bg-neutral-900 p-4 text-xs text-lime-100">
               <pre>{
   "resource": "alice@example.com",
   "server": {
@@ -187,7 +187,7 @@ POST {{ publicOriginExample }}/federation/events</pre>
             </p>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.signatureTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.signatureDescription") }}
@@ -198,7 +198,7 @@ POST {{ publicOriginExample }}/federation/events</pre>
                 <span v-html="safeHtml(item)" />
               </li>
             </ul>
-            <div class="mt-4 overflow-x-auto rounded-2xl bg-neutral-900 p-4 text-xs text-lime-100">
+            <div class="mt-4 overflow-x-auto rounded-xl bg-neutral-900 p-4 text-xs text-lime-100">
               <pre>UPPERCASE_HTTP_METHOD
 /request/path
 RFC3339_TIMESTAMP
@@ -222,10 +222,10 @@ BASE64(SHA256(request_body))</pre>
             </p>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.eventsTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">{{ $t("federationGuidelines.eventsDescription") }}</p>
-            <div class="mt-4 overflow-x-auto rounded-2xl bg-neutral-900 p-4 text-xs text-lime-100">
+            <div class="mt-4 overflow-x-auto rounded-xl bg-neutral-900 p-4 text-xs text-lime-100">
               <pre>{
   "event_id": "EVENT_UUID",
   "v": {{ FEDERATION_EVENT_SCHEMA_VERSION }},
@@ -252,7 +252,7 @@ BASE64(SHA256(request_body))</pre>
             <p class="mt-2 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.eventSchemaDescription") }}
             </p>
-            <div class="mt-4 overflow-x-auto rounded-2xl border border-neutral-200">
+            <div class="mt-4 overflow-x-auto rounded-xl border border-neutral-200">
               <table class="min-w-full divide-y divide-neutral-200 text-left text-xs text-neutral-700">
                 <thead class="bg-neutral-50 text-neutral-900">
                   <tr>
@@ -272,12 +272,12 @@ BASE64(SHA256(request_body))</pre>
             </div>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.followTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.followDescription") }}
             </p>
-            <div class="mt-4 overflow-x-auto rounded-2xl bg-neutral-900 p-4 text-xs text-lime-100">
+            <div class="mt-4 overflow-x-auto rounded-xl bg-neutral-900 p-4 text-xs text-lime-100">
               <pre>{
   "follower_acct": "bob@remote.example",
   "target_acct": "alice@example.com",
@@ -292,7 +292,7 @@ BASE64(SHA256(request_body))</pre>
             </ul>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.errorCodeTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.errorCodeDescription") }}
@@ -305,7 +305,7 @@ BASE64(SHA256(request_body))</pre>
             </ul>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.rateLimitTitle") }}</h2>
             <p class="mt-3 text-sm leading-7 text-neutral-700">
               {{ $t("federationGuidelines.rateLimitDescription") }}
@@ -318,7 +318,7 @@ BASE64(SHA256(request_body))</pre>
             </ul>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-xl font-semibold text-neutral-900">{{ $t("federationGuidelines.operationsTitle") }}</h2>
             <ul class="mt-4 space-y-3 text-sm leading-7 text-neutral-700">
               <li v-for="item in opsItems" :key="item" class="flex gap-3">
@@ -331,7 +331,7 @@ BASE64(SHA256(request_body))</pre>
             </p>
           </section>
 
-          <section class="border-t border-neutral-200 pt-8 dark:border-neutral-200">
+          <section class="border-t border-neutral-200 pt-8">
             <h2 class="text-2xl font-semibold text-neutral-900">{{ $t("federationGuidelines.cautionTitle") }}</h2>
             <ul class="mt-5 space-y-3 text-sm leading-7 text-neutral-700">
               <li v-for="item in cautionItems" :key="item" class="flex gap-3">

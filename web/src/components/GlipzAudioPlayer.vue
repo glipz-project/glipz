@@ -95,7 +95,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-600 dark:bg-neutral-800"
+    class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
     role="region"
     :aria-label="t('components.glipzMedia.audioRegion')"
   >
@@ -116,13 +116,13 @@ onBeforeUnmount(() => {
       @ended="playing = false"
     />
     <div class="flex flex-col gap-3 px-4 py-4">
-      <div class="flex items-center justify-center py-1 text-lime-600 dark:text-lime-400">
+      <div class="flex items-center justify-center py-1 text-lime-600">
         <Icon name="note" class="h-10 w-10 opacity-90" />
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lime-600 outline-none ring-offset-2 ring-offset-white hover:bg-lime-50 focus-visible:ring-2 focus-visible:ring-lime-500 dark:text-lime-400 dark:ring-offset-neutral-800 dark:hover:bg-neutral-700/80"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lime-600 outline-none ring-offset-2 ring-offset-white hover:bg-lime-50 focus-visible:ring-2 focus-visible:ring-lime-500 dark:ring-offset-neutral-800"
           :aria-label="playing ? t('components.glipzMedia.pause') : t('components.glipzMedia.play')"
           @click="togglePlay"
         >
@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
             <rect x="14" y="5" width="4" height="14" rx="1" />
           </svg>
         </button>
-        <span class="w-[88px] shrink-0 text-xs tabular-nums text-neutral-600 dark:text-neutral-300">{{ displayTime }}</span>
+        <span class="w-[88px] shrink-0 text-xs tabular-nums text-neutral-600">{{ displayTime }}</span>
         <input
           :value="seekUi"
           type="range"
@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
         />
         <button
           type="button"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lime-600 outline-none ring-offset-2 ring-offset-white hover:bg-lime-50 focus-visible:ring-2 focus-visible:ring-lime-500 dark:text-lime-400 dark:ring-offset-neutral-800 dark:hover:bg-neutral-700/80"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lime-600 outline-none ring-offset-2 ring-offset-white hover:bg-lime-50 focus-visible:ring-2 focus-visible:ring-lime-500 dark:ring-offset-neutral-800"
           :aria-label="muted ? t('components.glipzMedia.unmute') : t('components.glipzMedia.mute')"
           @click="toggleMute"
         >

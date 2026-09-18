@@ -64,10 +64,11 @@ const avatarImgFailed = ref(false);
 const profileMenuOpen = ref(false);
 const profileMenuRoot = ref<HTMLElement | null>(null);
 const sidebarComposeOpen = ref(false);
-/** Shows the sidebar as a drawer below the lg breakpoint. */
+/** Shows the sidebar as a drawer below the md breakpoint. */
 const mobileNavOpen = ref(false);
 const appHeaderEl = ref<HTMLElement | null>(null);
 const appHeaderOffset = ref("56px");
+const viewportHeight = ref("100dvh");
 const searchQuery = ref("");
 const themePreference = ref<ThemePreference>(readStoredThemePreference());
 const themeModePreference = ref<ThemeModePreference>(readStoredThemeModePreference());
@@ -221,6 +222,8 @@ function syncAppHeaderOffset() {
   if (typeof window === "undefined") return;
   const height = appHeaderEl.value?.getBoundingClientRect().height ?? 56;
   appHeaderOffset.value = `${Math.max(56, Math.round(height))}px`;
+  viewportHeight.value = `${window.visualViewport?.height ?? window.innerHeight}px`;
+  if (window.innerWidth >= 768) mobileNavOpen.value = false;
 }
 
 let disconnectNotifyStream: (() => void) | null = null;
@@ -280,62 +283,40 @@ const useViewportScroll = computed(() =>
 );
 const appRootClass = computed(() => {
   if (isAdminShell.value) return "min-h-screen";
-  const base = useViewportScroll.value ? "min-h-screen" : authed.value ? "h-[100dvh] max-h-[100dvh]" : "min-h-screen";
+  const base = useViewportScroll.value || usesGuestSimpleLayout.value || !authed.value
+    ? "min-h-[100dvh]"
+    : "h-[100dvh] max-h-[100dvh]";
   /** Reserve the top safe area at the root level when the header is hidden. */
   const topSafe =
     usesGuestSimpleLayout.value
       ? "pt-[env(safe-area-inset-top,0px)]"
       : hideMobileChrome.value && authed.value
-        ? "max-lg:pt-[env(safe-area-inset-top,0px)]"
+        ? "max-md:pt-[env(safe-area-inset-top,0px)]"
         : "";
   return [base, topSafe, usesGuestSimpleLayout.value ? "ui-simple-layout" : ""].filter(Boolean).join(" ");
 });
-const headerContainerClass = computed(() => {
-  if (isAdminShell.value) return "max-w-none";
-  if (wideMain.value) return "max-w-none";
-  if (!authed.value) return "max-w-[640px]";
-  return "max-w-[min(100%,80rem)]";
-});
-const shellClass = computed(() => {
-  if (isAdminShell.value) return "max-w-none flex-col";
-  if (usesGuestSimpleLayout.value) return "max-w-none flex-col py-8";
-  if (wideMain.value) {
-    return authed.value
-      ? "max-w-none flex-row flex-nowrap items-stretch justify-start gap-[20px] overflow-hidden"
-      : "max-w-none flex-col py-8";
-  }
-  if (!authed.value) return "max-w-[640px] flex-col py-8";
-  if (useViewportScroll.value) {
-    return "max-w-[min(100%,80rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px]";
-  }
-  return "max-w-[min(100%,80rem)] flex-row flex-nowrap items-stretch justify-center gap-[20px] overflow-hidden";
-});
+const shellClass = computed(() => ({
+  'ui-shell': true,
+  'ui-shell--simple': usesGuestSimpleLayout.value,
+  'ui-shell--guest': !authed.value && !usesGuestSimpleLayout.value,
+  'ui-shell--wide': wideMain.value,
+  'ui-shell--admin': isAdminShell.value,
+  'ui-shell--contained': !useViewportScroll.value && authed.value && !usesGuestSimpleLayout.value,
+}));
 const mainFooterNavItems = computed(() => [
   { to: "/feed", label: t("app.nav.home"), icon: "home" as const },
   { to: "/search", label: t("app.nav.topics"), icon: "search" as const },
   { to: "/notifications", label: t("app.nav.notifications"), icon: "bell" as const },
   { to: "/messages", label: t("app.nav.messages"), icon: "message" as const },
 ]);
-const mobileFooterPaddingClass = computed(() =>
-  isAdminShell.value || usesGuestSimpleLayout.value || hideMobileChrome.value ? "" : "max-lg:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
-);
-const mainClass = computed(() => {
-  if (isAdminShell.value) return "min-h-screen w-full bg-white";
-  if (usesGuestSimpleLayout.value) return "w-full";
-  if (wideMain.value) {
-    return authed.value
-      ? `flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-white ${mobileFooterPaddingClass.value} lg:border-l lg:border-neutral-200`.trim()
-      : "w-full";
-  }
-  if (!authed.value) return "w-full";
-  if (useViewportScroll.value) {
-    return `flex min-h-full min-w-0 max-w-[640px] flex-[0_1_640px] flex-col self-stretch border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
-  }
-  return `flex h-full min-h-0 min-w-0 max-w-[640px] flex-[0_1_640px] flex-col overflow-y-auto border-x border-neutral-200 bg-white ${mobileFooterPaddingClass.value}`.trim();
-});
-const shellPaddingClass = computed(() =>
-  isAdminShell.value ? "px-0" : mobileEdgeToEdge.value ? "px-0 sm:px-[20px]" : "px-[20px]",
-);
+const mainClass = computed(() => ({
+  'ui-main': true,
+  'ui-main--simple': usesGuestSimpleLayout.value,
+  'ui-main--wide': wideMain.value,
+  'ui-main--admin': isAdminShell.value,
+  'ui-main--contained': !useViewportScroll.value && authed.value && !usesGuestSimpleLayout.value,
+  'ui-main--mobile-nav': authed.value && !isAdminShell.value && !usesGuestSimpleLayout.value && !hideMobileChrome.value,
+}));
 const isFeedRoute = computed(() => route.path === "/feed" || route.path === "/feed/scheduled");
 const isSearchRoute = computed(() => route.path === "/search");
 const isNotificationsRoute = computed(() => route.path === "/notifications");
@@ -514,11 +495,15 @@ function closeProfileMenu() {
 }
 
 function closeMobileNav() {
+  const wasOpen = mobileNavOpen.value;
   mobileNavOpen.value = false;
+  if (wasOpen) void nextTick(() => document.getElementById("mobile-account-button")?.focus());
 }
 
 function toggleMobileNav() {
-  mobileNavOpen.value = !mobileNavOpen.value;
+  if (mobileNavOpen.value) return closeMobileNav();
+  mobileNavOpen.value = true;
+  void nextTick(() => document.querySelector<HTMLButtonElement>(".ui-drawer-close")?.focus({ preventScroll: true }));
 }
 
 function onAsideNavClick(ev: MouseEvent) {
@@ -590,6 +575,13 @@ function onDocumentKeydown(ev: KeyboardEvent) {
     closeProfileMenu();
     closeMobileNav();
   }
+  if (ev.key === "Tab" && mobileNavOpen.value && window.innerWidth < 768) {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>("#app-sidebar a[href], #app-sidebar button:not(:disabled)"))
+      .filter(el => el.getClientRects().length > 0);
+    const first = elements[0], last = elements[elements.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last?.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first?.focus(); }
+  }
 }
 
 let appHeaderResizeObserver: ResizeObserver | null = null;
@@ -608,6 +600,7 @@ onMounted(() => {
     if (appHeaderEl.value) appHeaderResizeObserver.observe(appHeaderEl.value);
   }
   window.addEventListener("resize", syncAppHeaderOffset);
+  window.visualViewport?.addEventListener("resize", syncAppHeaderOffset);
   void loadOperatorAnnouncements();
 });
 
@@ -619,6 +612,7 @@ onBeforeUnmount(() => {
   document.removeEventListener("keydown", onDocumentKeydown);
   window.removeEventListener("storage", onStorage);
   window.removeEventListener("resize", syncAppHeaderOffset);
+  window.visualViewport?.removeEventListener("resize", syncAppHeaderOffset);
   stopOperatorAnnouncementSlider();
   appHeaderResizeObserver?.disconnect();
   appHeaderResizeObserver = null;
@@ -649,193 +643,75 @@ function avatarInitials(email: string): string {
   <div
     class="ui-app-shell flex flex-col text-neutral-900"
     :class="appRootClass"
-    :style="{ '--app-header-offset': appHeaderOffset }"
+    :style="{ '--app-header-offset': appHeaderOffset, '--app-viewport-height': viewportHeight }"
   >
     <a href="#main-content" class="ui-skip-link">{{ $t('ux.skipContent') }}</a>
     <div
       v-if="notifyToastMessageText"
-      class="fixed right-4 z-[200] max-w-sm rounded-xl border border-lime-200 bg-white px-4 py-3 text-sm text-neutral-900 shadow-lg ring-1 ring-black/5 max-lg:top-[calc(1rem+env(safe-area-inset-top,0px))] lg:top-4"
+      class="fixed right-4 z-[200] max-w-sm rounded-xl border border-lime-200 bg-white px-4 py-3 text-sm text-neutral-900 shadow-lg ring-1 ring-black/5 max-md:top-[calc(1rem+env(safe-area-inset-top,0px))] md:top-4"
       role="status"
     >
       {{ notifyToastMessageText }}
     </div>
-    <header
-      ref="appHeaderEl"
-      v-if="!usesGuestSimpleLayout && !isAdminShell && !hideAppHeader"
-      class="sticky top-0 z-10 shrink-0 border-b border-lime-200 bg-white/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur"
-      :class="hideMobileChrome ? 'max-lg:hidden' : ''"
-    >
-      <div
-        class="ui-header-inner mx-auto w-full px-[20px]"
-        :class="headerContainerClass"
-      >
-        <div
-          v-if="authed"
-          class="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 lg:flex lg:items-end lg:justify-center lg:gap-[20px] lg:pb-0"
-        >
-          <div
-            class="flex min-w-0 shrink-0 items-center lg:w-60 lg:max-w-[min(100vw-2rem,16rem)] lg:gap-2 lg:pb-3"
-          >
-            <button
-              type="button"
-              class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 hover:bg-neutral-50 lg:hidden"
-              :aria-label="mobileNavOpen ? $t('app.menu.close') : $t('app.menu.open')"
-              :aria-expanded="mobileNavOpen"
-              aria-controls="app-sidebar"
-              @click="toggleMobileNav"
-            >
-              <Icon v-if="!mobileNavOpen" name="menu" class="h-5 w-5" />
-              <Icon v-else name="close" class="h-5 w-5" />
-            </button>
-            <div v-if="isSearchRoute" class="hidden w-full lg:block xl:hidden">
-              <label class="sr-only" for="global-search-tablet">{{ $t('app.search.label') }}</label>
-              <input id="global-search-tablet" v-model="searchQuery" type="search" class="ui-input" :placeholder="$t('app.search.placeholder')" @keydown.enter.prevent="onGlobalSearchEnter" />
-            </div>
-          </div>
-          <div class="min-w-0 lg:hidden">
-            <div v-if="isSearchRoute" class="mx-auto w-full max-w-[min(100%,22rem)]">
-              <label class="sr-only" for="global-search-mobile">{{ $t("app.search.label") }}</label>
-              <input
-                id="global-search-mobile"
-                v-model="searchQuery"
-                type="search"
-                name="q"
-                :placeholder="$t('app.search.placeholder')"
-                autocomplete="off"
-                class="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 shadow-sm outline-none ring-lime-500/30 transition placeholder:text-neutral-400 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
-                @keydown.enter.prevent="onGlobalSearchEnter"
-              />
-            </div>
-            <div
-              v-else-if="isMessagesRoute"
-              class="flex min-w-0 items-center justify-center py-0.5"
-            >
-              <span class="truncate text-lg font-semibold text-neutral-900">{{ $t("app.search.messages") }}</span>
-            </div>
-            <div v-else class="h-8" aria-hidden="true" />
-          </div>
-          <div
-            class="hidden min-h-0 min-w-0 max-w-[640px] shrink-0 self-end flex-[0_1_640px] lg:block"
-          >
-            <div id="app-view-header-slot-desktop" class="min-h-0" />
-          </div>
-          <div class="h-10 w-10 shrink-0 lg:hidden" aria-hidden="true" />
-          <div
-            class="hidden min-h-0 w-[320px] shrink-0 flex-col justify-center xl:flex lg:pb-3"
-          >
-            <div class="w-full min-w-0 max-w-[320px]">
-              <label class="sr-only" for="global-search">{{ $t("app.search.label") }}</label>
-              <input
-                id="global-search"
-                v-model="searchQuery"
-                type="search"
-                name="q"
-                :placeholder="$t('app.search.placeholder')"
-                autocomplete="off"
-                class="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 shadow-sm outline-none ring-lime-500/30 transition placeholder:text-neutral-400 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
-                @keydown.enter.prevent="onGlobalSearchEnter"
-              />
-            </div>
-          </div>
-        </div>
-        <div v-else class="flex w-full flex-wrap items-center justify-between gap-3 py-3">
-          <RouterLink
-            to="/"
-            class="flex shrink-0 items-center py-0.5 hover:opacity-90"
-            aria-label="Glipz ホーム"
-          >
-            <img :src="logoImg" alt="Glipz" class="h-8 w-auto max-h-9 object-contain object-left" />
-          </RouterLink>
-          <div class="order-3 w-full min-w-0 sm:order-2 sm:mx-auto sm:max-w-[min(100%,320px)] sm:flex-1">
-            <label class="sr-only" for="global-search-guest">{{ $t("app.search.label") }}</label>
-            <input
-              id="global-search-guest"
-              v-model="searchQuery"
-              type="search"
-              name="q"
-              :placeholder="$t('app.search.guestPlaceholder')"
-              autocomplete="off"
-              class="w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 shadow-sm outline-none ring-lime-500/30 transition placeholder:text-neutral-400 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
-              @keydown.enter.prevent="onGlobalSearchEnter"
-            />
-          </div>
-          <RouterLink
-            v-if="!route.path.startsWith('/mfa')"
-            to="/login"
-            class="order-2 shrink-0 rounded-md bg-lime-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-lime-600 sm:order-3"
-          >
-            {{ $t("app.guest.login") }}
-          </RouterLink>
-        </div>
-        <div
-          v-if="authed"
-          class="flex w-full items-start justify-center gap-[20px] lg:hidden"
-        >
-          <div class="hidden min-h-0 min-w-0 w-60 shrink-0 lg:block" aria-hidden="true" />
-          <div class="min-w-0 w-full max-w-[640px] flex-[0_1_640px]">
-            <div id="app-view-header-slot-mobile" class="min-h-0" :class="!isSearchRoute ? 'ui-mobile-page-title' : ''" />
-          </div>
-          <div
-            v-if="!hideRightAside"
-            class="hidden min-h-0 min-w-0 w-[320px] shrink-0 xl:block"
-            aria-hidden="true"
-          />
-        </div>
-      </div>
+    <header v-if="!authed && !usesGuestSimpleLayout && !isAdminShell" class="ui-guest-header">
+      <RouterLink to="/" aria-label="Glipz"><img :src="logoImg" alt="Glipz" class="ui-brand" /></RouterLink>
+      <form class="ui-search" @submit.prevent="onGlobalSearchEnter">
+        <Icon name="search" class="h-5 w-5" />
+        <label class="sr-only" for="global-search-guest">{{ $t('app.search.label') }}</label>
+        <input id="global-search-guest" v-model="searchQuery" type="search" :placeholder="$t('app.search.guestPlaceholder')" />
+      </form>
+      <RouterLink to="/login" class="ui-button ui-button--primary">{{ $t('app.guest.login') }}</RouterLink>
     </header>
 
     <div
       class="relative mx-auto flex w-full min-h-0 flex-1"
-      :class="[shellClass, shellPaddingClass]"
+      :class="shellClass"
     >
       <div
         v-if="authed && !usesGuestSimpleLayout && !isAdminShell && mobileNavOpen"
-        class="fixed inset-x-0 bottom-0 top-[var(--app-header-offset,56px)] z-30 bg-black/40 lg:hidden"
+        class="fixed inset-0 z-30 bg-black/40 md:hidden"
         aria-hidden="true"
         @click="closeMobileNav"
       />
       <aside
         v-if="authed && !usesGuestSimpleLayout && !isAdminShell"
         id="app-sidebar"
-        class="flex min-h-0 w-60 max-w-[min(100vw-2rem,16rem)] shrink-0 flex-col self-stretch bg-white px-3 py-6 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:top-[var(--app-header-offset,56px)] max-lg:z-40 max-lg:overflow-y-auto max-lg:transition-transform max-lg:duration-200 max-lg:ease-out"
-        :class="[
-          mobileNavOpen ? 'max-lg:translate-x-0 max-lg:shadow-xl max-lg:ring-1 max-lg:ring-black/5' : 'max-lg:-translate-x-full max-lg:invisible',
-          useViewportScroll
-            ? 'lg:sticky lg:self-start lg:overflow-visible lg:translate-x-0'
-            : 'lg:relative lg:inset-auto lg:z-auto lg:h-auto lg:max-h-none lg:overflow-visible lg:translate-x-0',
-        ]"
-        :style="useViewportScroll ? { top: appHeaderOffset, height: `calc(100dvh - ${appHeaderOffset})` } : undefined"
+        class="ui-sidebar"
+        :class="{ 'ui-sidebar--open': mobileNavOpen }"
+        :role="mobileNavOpen ? 'dialog' : undefined"
+        :aria-modal="mobileNavOpen ? true : undefined"
         :aria-label="$t('app.menu.main')"
       >
         <RouterLink
           to="/feed"
-          class="mb-5 flex min-w-0 shrink-0 items-center px-2 py-0.5 hover:opacity-90"
+          class="ui-sidebar-brand"
           aria-label="Glipz ホーム"
           @click="closeMobileNav"
         >
-          <img :src="logoImg" alt="Glipz" class="h-12 w-auto max-h-14 object-contain object-left" />
+          <img :src="logoImg" alt="Glipz" class="ui-brand" />
         </RouterLink>
-        <nav class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-0.5" @click="onAsideNavClick">
+        <button v-if="mobileNavOpen" type="button" class="ui-drawer-close ui-button ui-icon-button ui-button--ghost md:hidden" :aria-label="$t('app.menu.close')" @click="closeMobileNav"><Icon name="close" class="h-5 w-5" /></button>
+        <nav class="ui-primary-nav" @click="onAsideNavClick">
           <RouterLink
             to="/feed"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <Icon name="home" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.home") }}</span>
           </RouterLink>
           <RouterLink
             to="/search"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
-            <Icon name="compass" class="h-5 w-5 shrink-0" />
+            <Icon name="search" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.topics") }}</span>
           </RouterLink>
           <RouterLink
             to="/notifications"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <span class="flex min-w-0 flex-1 items-center gap-3">
               <Icon name="bell" class="h-5 w-5 shrink-0" />
@@ -850,8 +726,8 @@ function avatarInitials(email: string): string {
           </RouterLink>
           <RouterLink
             to="/messages"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            :class="route.path === '/messages' || route.path.startsWith('/messages/') ? '!rounded-full !bg-lime-600 !text-white' : ''"
+            class="ui-nav-link"
+            :class="route.path === '/messages' || route.path.startsWith('/messages/') ? 'ui-nav-link--active' : ''"
           >
             <span class="flex min-w-0 flex-1 items-center gap-3">
               <Icon name="message" class="h-5 w-5 shrink-0" />
@@ -866,16 +742,16 @@ function avatarInitials(email: string): string {
           </RouterLink>
           <RouterLink
             to="/bookmarks"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <Icon name="bookmark" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.bookmarks") }}</span>
           </RouterLink>
           <RouterLink
             to="/communities"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <Icon name="hub" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.communities") }}</span>
@@ -883,16 +759,16 @@ function avatarInitials(email: string): string {
           <RouterLink
             v-if="me?.handle"
             :to="`/@${me.handle}`"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <Icon name="user" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.profile") }}</span>
           </RouterLink>
           <RouterLink
             to="/settings"
-            class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-lime-500 hover:text-white"
-            active-class="!rounded-full !bg-lime-600 !text-white"
+            class="ui-nav-link"
+            active-class="ui-nav-link--active"
           >
             <Icon name="settings" class="h-5 w-5 shrink-0" />
             <span>{{ $t("app.nav.settings") }}</span>
@@ -902,21 +778,21 @@ function avatarInitials(email: string): string {
         <div class="mt-4 shrink-0 px-0.5">
           <button
             type="button"
-            class="flex w-full items-center justify-center gap-2.5 rounded-full bg-lime-600 px-5 py-3.5 text-base font-bold text-white shadow-sm shadow-lime-900/10 transition hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"
+            class="ui-button ui-button--primary ui-sidebar-compose w-full"
             @click="openSidebarCompose"
           >
-            <span>{{ $t("app.nav.post") }}</span>
+            <Icon name="pencil" class="h-5 w-5" /><span>{{ $t("app.nav.post") }}</span>
           </button>
           <p class="mt-3 text-center text-[11px] font-medium uppercase tracking-wide text-neutral-400">
             APP VERSION {{ APP_VERSION }}
           </p>
         </div>
 
-        <div ref="profileMenuRoot" class="relative mt-5 shrink-0 border-t border-neutral-200 pt-4">
+        <div ref="profileMenuRoot" class="ui-sidebar-account relative shrink-0">
           <button
             id="profile-menu-button"
             type="button"
-            class="group flex w-full items-center gap-3 rounded-full px-2 py-2 text-left transition-colors hover:bg-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"
+            class="ui-account-button"
             :title="me?.email ?? $t('app.nav.account')"
             :aria-label="$t('app.menu.account')"
             :aria-expanded="profileMenuOpen"
@@ -945,12 +821,12 @@ function avatarInitials(email: string): string {
             </span>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5">
-                <p class="truncate text-sm font-semibold text-neutral-900 group-hover:text-white">
+                <p class="truncate text-sm font-semibold text-neutral-900">
                   {{ me?.email ? me.display_name || displayNameFromEmail(me.email) : $t("app.loading") }}
                 </p>
                 <UserBadges v-if="me?.email" :badges="me?.badges" size="xs" />
               </div>
-              <p class="truncate text-xs text-neutral-500 group-hover:text-lime-100">
+              <p class="truncate text-xs text-neutral-500">
                 {{
                   me?.handle
                     ? currentDomain()
@@ -999,7 +875,25 @@ function avatarInitials(email: string): string {
       <main id="main-content" tabindex="-1"
         class="min-w-0"
         :class="mainClass"
+        :inert="mobileNavOpen || undefined"
       >
+        <header v-if="authed && !usesGuestSimpleLayout && !isAdminShell && !hideAppHeader" ref="appHeaderEl" class="ui-content-header">
+          <div v-if="!hideMobileChrome" class="ui-mobile-topbar md:hidden">
+            <RouterLink to="/feed" aria-label="Glipz"><img :src="logoImg" alt="Glipz" class="ui-brand" /></RouterLink>
+            <button id="mobile-account-button" class="ui-mobile-account" type="button" :aria-label="$t('app.menu.account')" :aria-expanded="mobileNavOpen" aria-controls="app-sidebar" @click="toggleMobileNav">
+              <img v-if="me?.avatar_url && !avatarImgFailed" :src="me.avatar_url" alt="" @error="avatarImgFailed = true" />
+              <span v-else>{{ me?.email ? avatarInitials(me.email) : '?' }}</span>
+            </button>
+          </div>
+          <h1 v-if="isFeedRoute" class="ui-feed-heading hidden md:block">{{ $t('app.nav.home') }}</h1>
+          <form v-if="isSearchRoute" class="ui-search ui-content-search xl:hidden" @submit.prevent="onGlobalSearchEnter">
+            <Icon name="search" class="h-5 w-5" />
+            <label class="sr-only" for="global-search-tablet">{{ $t('app.search.label') }}</label>
+            <input id="global-search-tablet" v-model="searchQuery" type="search" :placeholder="$t('app.search.placeholder')" />
+          </form>
+          <div id="app-view-header-slot-desktop" class="ui-view-header hidden md:block" />
+          <div id="app-view-header-slot-mobile" class="ui-view-header md:hidden" />
+        </header>
         <RouterView />
       </main>
       <SidebarComposeModal
@@ -1015,12 +909,15 @@ function avatarInitials(email: string): string {
       />
       <aside
         v-if="authed && !usesGuestSimpleLayout && !isAdminShell && !hideRightAside"
-        class="hidden min-h-0 w-[320px] shrink-0 flex-col gap-6 overflow-y-auto bg-white px-3 py-6 xl:flex"
-        :class="useViewportScroll ? 'lg:sticky lg:self-start' : ''"
-        :style="useViewportScroll ? { top: appHeaderOffset, maxHeight: `calc(100dvh - ${appHeaderOffset})` } : undefined"
+        class="ui-right-sidebar"
         :aria-label="$t('app.menu.announcementsAndPolicies')"
       >
-        <section>
+        <form class="ui-search" @submit.prevent="onGlobalSearchEnter">
+          <Icon name="search" class="h-5 w-5" />
+          <label class="sr-only" for="global-search">{{ $t('app.search.label') }}</label>
+          <input id="global-search" v-model="searchQuery" type="search" :placeholder="$t('app.search.placeholder')" />
+        </form>
+        <section v-if="currentOperatorAnnouncement">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">{{ $t("app.announcements.heading") }}</h2>
             <p v-if="hasMultipleOperatorAnnouncements" class="text-[11px] tabular-nums text-neutral-400">
@@ -1139,7 +1036,7 @@ function avatarInitials(email: string): string {
     </div>
     <nav
       v-if="authed && !usesGuestSimpleLayout && !isAdminShell && !hideMobileChrome"
-      class="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-white/95 pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] pb-[env(safe-area-inset-bottom,0px)] backdrop-blur supports-[backdrop-filter]:bg-white/90 lg:hidden"
+      class="ui-bottom-nav md:hidden"
       :aria-label="$t('app.menu.mobileFooter')"
     >
       <div class="grid grid-cols-4">
@@ -1147,12 +1044,13 @@ function avatarInitials(email: string): string {
           v-for="item in mainFooterNavItems"
           :key="item.to"
           :to="item.to"
-          class="relative flex min-h-[4.25rem] items-center justify-center px-2 py-2 transition-colors"
+          class="ui-bottom-link"
           :class="isFooterNavActive(item.to) ? 'text-lime-700' : 'text-neutral-500 hover:text-neutral-800'"
           :aria-label="item.label"
+          :aria-current="isFooterNavActive(item.to) ? 'page' : undefined"
         >
           <Icon :name="item.icon" class="h-6 w-6" />
-          <span class="sr-only">{{ item.label }}</span>
+          <span class="ui-bottom-label">{{ item.label }}</span>
           <span
             v-if="footerNavBadge(item.to) > 0"
             class="absolute left-1/2 top-2 ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center whitespace-nowrap rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white ring-2 ring-white"

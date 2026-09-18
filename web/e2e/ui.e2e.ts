@@ -138,5 +138,10 @@ test('hub detail uses page scrolling without nested tab scrollbars', async ({pag
     await page.keyboard.press('Enter');
     await expect(tabs.getByRole('button',{name:'詳細情報',exact:true})).toHaveAttribute('aria-current','page');
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    if (width >= 1280) {
+      for (const selector of ['.ui-sidebar', '.ui-right-sidebar']) {
+        expect(await page.locator(selector).evaluate(el => el.getBoundingClientRect().top)).toBe(0);
+      }
+    }
   }
 });

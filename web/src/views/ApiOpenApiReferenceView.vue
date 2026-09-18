@@ -16,15 +16,15 @@ const scalarConfiguration = {
 </script>
 
 <template>
-  <div class="w-full min-w-0 px-4 py-8 text-neutral-900 dark:text-neutral-100 sm:px-6 lg:px-8">
+  <div class="w-full min-w-0 px-4 py-8 text-neutral-900 sm:px-6 lg:px-8">
     <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <RouterLink :to="backTo" class="text-sm font-medium text-lime-700 hover:text-lime-800 dark:text-lime-400 dark:hover:text-lime-300" @click="backOnClick">
+      <RouterLink :to="backTo" class="text-sm font-medium text-lime-700 hover:text-lime-800" @click="backOnClick">
         {{ backLabel }}
       </RouterLink>
-      <p class="text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+      <p class="text-sm leading-6 text-neutral-600">
         {{ t("views.apiOpenApi.languageNote") }}
       </p>
-      <div class="isolate min-h-[70vh] w-full min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-950">
+      <div class="isolate min-h-[70vh] w-full min-w-0 overflow-hidden rounded-xl border border-neutral-200 bg-white">
         <ApiReference :configuration="scalarConfiguration" />
       </div>
     </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false });
 import { computed, inject, onBeforeUnmount, onMounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { RouterLink } from "vue-router";
@@ -846,7 +847,7 @@ async function submitUnlock(it: TimelinePost) {
 </script>
 
 <template>
-  <div class="ui-timeline">
+  <div class="ui-timeline" v-bind="$attrs">
     <Teleport to="body">
       <div
         v-if="ageGatePostId"
@@ -914,7 +915,7 @@ async function submitUnlock(it: TimelinePost) {
       </div>
       <div :class="it.repost && !hasCommentedRepost(it) ? 'px-3 pb-2 pt-1' : ''">
         <article
-          class="flex cursor-default gap-3 px-4 py-3 transition-colors hover:bg-neutral-50/90"
+          class="ui-post flex cursor-default gap-3 px-4 py-3 transition-colors"
           :class="[threadArticleIndentClass(it), it.repost && !hasCommentedRepost(it) ? 'rounded-xl border border-neutral-200 bg-white shadow-sm' : '']"
           :style="threadArticleIndentStyle(it)"
         >
@@ -1505,7 +1506,7 @@ async function submitUnlock(it: TimelinePost) {
         </div>
 
         <div
-          class="mt-3 flex w-full max-w-full flex-wrap items-center justify-between gap-x-1 gap-y-1 text-neutral-400 sm:gap-x-2"
+          class="ui-post-actions mt-3 w-full max-w-full items-center text-neutral-400"
         >
           <button
             v-if="!it.is_federated || showFederatedReplyAction"

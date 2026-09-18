@@ -193,13 +193,13 @@ onMounted(() => {
     <p v-if="err" class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ err }}</p>
     <p v-if="loading" class="mt-8 text-sm text-neutral-500">{{ t("views.adminFederation.loading") }}</p>
     <template v-else-if="isAdmin">
-      <section class="mt-8 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-8 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ t("views.adminFederation.queueHeading") }}</h2>
         <p class="mt-2 text-sm text-neutral-800">
           {{ t("views.adminFederation.queueSummary", { pending, dead }) }}
         </p>
       </section>
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <div class="flex flex-wrap items-end gap-3">
           <label class="block text-sm">
             <span class="mb-1 block font-medium text-neutral-700">{{ t("views.adminFederation.stateLabel") }}</span>
@@ -222,7 +222,7 @@ onMounted(() => {
             {{ t("views.adminFederation.refresh") }}
           </button>
         </div>
-        <div class="mt-4 overflow-x-auto rounded-2xl border border-neutral-200">
+        <div class="mt-4 overflow-x-auto rounded-xl border border-neutral-200">
           <table class="min-w-full divide-y divide-neutral-200 text-left text-xs">
             <thead class="bg-neutral-50 text-neutral-600">
               <tr>
@@ -251,7 +251,7 @@ onMounted(() => {
           </table>
         </div>
       </section>
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ t("views.adminFederation.domainBlockHeading") }}</h2>
         <form class="mt-4 flex flex-wrap items-end gap-3" @submit.prevent="addBlock">
           <input
@@ -275,7 +275,7 @@ onMounted(() => {
           <li
             v-for="b in blocks"
             :key="b.host"
-            class="flex items-center justify-between gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3"
+            class="flex items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"
           >
             <div>
               <span class="font-mono font-medium">{{ b.host }}</span>
@@ -293,7 +293,7 @@ onMounted(() => {
         </ul>
       </section>
 
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">
           {{ t("views.adminFederation.knownInstancesHeading") }}
         </h2>
@@ -320,7 +320,7 @@ onMounted(() => {
           <li
             v-for="k in knownInstances"
             :key="k.host"
-            class="flex items-center justify-between gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3"
+            class="flex items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"
           >
             <div>
               <span class="font-mono font-medium">{{ k.host }}</span>

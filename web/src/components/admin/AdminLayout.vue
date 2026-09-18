@@ -83,8 +83,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white text-neutral-900">
-    <div class="border-b border-lime-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+  <div class="ui-admin min-h-screen bg-white text-neutral-900">
+    <div class="border-b border-lime-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
       <div class="flex items-center justify-between gap-3">
         <button
           type="button"
@@ -107,20 +107,20 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="min-h-screen">
+    <div>
       <div
         v-if="mobileOpen"
-        class="fixed inset-0 z-30 bg-black/40 lg:hidden"
+        class="fixed inset-0 z-30 bg-black/40 md:hidden"
         aria-hidden="true"
         @click="closeMobile"
       />
       <aside
         id="admin-sidebar"
-        class="fixed inset-y-0 left-0 z-40 flex h-[100dvh] w-72 max-w-[85vw] flex-col border-r border-neutral-200 bg-white px-4 py-5 transition-transform lg:z-20 lg:max-w-none lg:translate-x-0"
-        :class="mobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full lg:translate-x-0'"
+        class="fixed inset-y-0 left-0 z-40 flex h-[100dvh] w-72 max-w-[85vw] flex-col border-r border-neutral-200 bg-white px-4 py-5 transition-transform md:z-20 md:max-w-none md:translate-x-0"
+        :class="mobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0'"
         :aria-label="$t('views.adminShell.navLabel')"
       >
-        <RouterLink to="/admin" class="hidden items-center gap-2 px-2 py-1 hover:opacity-90 lg:flex">
+        <RouterLink to="/admin" class="hidden items-center gap-2 px-2 py-1 hover:opacity-90 md:flex">
           <img :src="logoImg" alt="Glipz" class="h-9 w-auto" />
           <span class="text-sm font-bold text-neutral-900">{{ $t("views.adminShell.title") }}</span>
         </RouterLink>
@@ -131,7 +131,7 @@ onMounted(() => {
             :key="item.to"
             :to="item.to"
             class="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium transition-colors"
-            :class="isActive(item.to, item.exact) ? 'bg-lime-600 text-white' : 'text-neutral-700 hover:bg-lime-50 hover:text-lime-900'"
+            :class="isActive(item.to, item.exact) ? 'ui-nav-link--active' : 'text-neutral-700 hover:bg-lime-50 hover:text-lime-900'"
             @click="closeMobile"
           >
             <Icon :name="item.icon" class="h-5 w-5 shrink-0" />
@@ -160,7 +160,7 @@ onMounted(() => {
         </div>
       </aside>
 
-      <main class="min-w-0 bg-neutral-50/60 lg:ml-72">
+      <main class="min-w-0 bg-neutral-50/60 md:ml-72">
         <div v-if="loading" class="mx-auto max-w-6xl px-4 py-10 text-sm text-neutral-500">
           {{ $t("app.loading") }}
         </div>

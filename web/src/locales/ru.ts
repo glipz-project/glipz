@@ -73,7 +73,7 @@ export const ruOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "Привычная лаймовая тема Glipz.",
+          description: "Лаконичная тема с тёмно-синим текстом и оранжевыми акцентами.",
         },
         pink: {
           label: "Розовая",

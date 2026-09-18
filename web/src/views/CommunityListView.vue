@@ -207,7 +207,7 @@ onUnmounted(() => {
     >
       <div class="flex items-start justify-between gap-3">
         <div class="flex min-w-0 gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-lime-100 text-base font-bold text-lime-800">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-lime-100 text-base font-bold text-lime-800">
             <img v-if="community.icon_url" :src="community.icon_url" alt="" class="h-full w-full object-cover" />
             <span v-else>{{ community.name.slice(0, 1) }}</span>
           </div>

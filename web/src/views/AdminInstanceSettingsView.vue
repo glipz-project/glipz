@@ -156,7 +156,6 @@ onMounted(() => {
   <div class="mx-auto max-w-5xl px-4 py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">{{ $t("views.adminShell.eyebrow") }}</p>
         <h1 class="mt-2 text-2xl font-bold text-neutral-900">{{ $t("views.adminInstanceSettings.title") }}</h1>
         <p class="mt-2 text-sm text-neutral-600">{{ $t("views.adminInstanceSettings.description") }}</p>
       </div>
@@ -175,7 +174,7 @@ onMounted(() => {
     <p v-if="loading" class="mt-8 text-sm text-neutral-500">{{ $t("app.loading") }}</p>
 
     <template v-else>
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.serverInfoHeading") }}</h2>
         <p class="mt-1 text-sm text-neutral-600">{{ $t("views.adminInstanceSettings.serverInfoHint") }}</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
@@ -203,7 +202,7 @@ onMounted(() => {
           <textarea
             v-model="settings.server_description"
             rows="4"
-            class="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+            class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
             :placeholder="$t('views.adminInstanceSettings.serverDescriptionPlaceholder')"
           />
         </label>
@@ -216,7 +215,7 @@ onMounted(() => {
             :placeholder="$t('views.adminInstanceSettings.adminEmailPlaceholder')"
           />
         </label>
-        <label class="mt-4 block rounded-2xl bg-neutral-50 p-4 text-sm">
+        <label class="mt-4 block rounded-xl bg-neutral-50 p-4 text-sm">
           <span class="mb-1 block font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.minimumRegistrationAge") }}</span>
           <span class="mb-3 block text-sm text-neutral-600">{{ $t("views.adminInstanceSettings.minimumRegistrationAgeHint") }}</span>
           <input
@@ -230,9 +229,9 @@ onMounted(() => {
         </label>
       </section>
 
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.registrationHeading") }}</h2>
-        <label class="mt-4 flex items-start gap-3 rounded-2xl bg-neutral-50 p-4">
+        <label class="mt-4 flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
           <input
             v-model="settings.registrations_enabled"
             type="checkbox"
@@ -245,7 +244,7 @@ onMounted(() => {
         </label>
       </section>
 
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.legalUrlsHeading") }}</h2>
         <p class="mt-1 text-sm text-neutral-600">{{ $t("views.adminInstanceSettings.legalUrlsHint") }}</p>
         <div class="mt-4 grid gap-4">
@@ -282,20 +281,20 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.federationHeading") }}</h2>
         <label class="mt-4 block text-sm">
           <span class="mb-1 block font-medium text-neutral-700">{{ $t("views.adminInstanceSettings.policySummary") }}</span>
           <textarea
             v-model="settings.federation_policy_summary"
             rows="4"
-            class="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+            class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
             :placeholder="$t('views.adminInstanceSettings.policyPlaceholder')"
           />
         </label>
       </section>
 
-      <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminInstanceSettings.announcementsHeading") }}</h2>
@@ -317,7 +316,7 @@ onMounted(() => {
           <article
             v-for="(row, index) in settings.operator_announcements"
             :key="index"
-            class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
+            class="rounded-xl border border-neutral-200 bg-neutral-50 p-4"
           >
             <div class="grid gap-3 md:grid-cols-2">
               <label class="block text-sm">

@@ -15,7 +15,7 @@ if sys.argv[1] == 'create':
     c, handle, email, password, mail = smoke.register()
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(dict(email=email, password=password, handle=handle, mail=mail)), encoding='utf-8')
-    c.call('POST', '/api/v1/posts', dict(caption='UI regression fixture. ' + '読みやすさの検証。' * 12, media_type='text', visibility='public'), expected=201)
+    c.call('POST', '/api/v1/posts', dict(caption='UI regression fixture. ' + '読みやすさの検証。' * 12, media_type='text', visibility='private'), expected=201)
     print('UI fixture ready')
 elif sys.argv[1] == 'cleanup' and path.exists():
     fixture = json.loads(path.read_text(encoding='utf-8'))

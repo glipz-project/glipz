@@ -161,10 +161,10 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <section class="overflow-hidden rounded-2xl border border-lime-200 bg-white dark:border-lime-800/70 dark:bg-neutral-950">
+      <section class="about-hero">
         <div class="grid gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_24rem] lg:items-start lg:px-10">
           <div class="max-w-3xl">
-            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-lime-700">{{ $t("about.badge") }}</p>
+
             <h1 class="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
               {{ ($tm("about.title") as string[])[0] }}
               <br class="hidden sm:block" />
@@ -198,8 +198,8 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div  :class="publicTimelineItems.length ? 'max-h-[32rem]' : ''" class="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white/90 shadow-sm dark:border-neutral-200 dark:bg-neutral-900/90">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4 dark:border-neutral-200">
+          <div  :class="publicTimelineItems.length ? 'max-h-[32rem]' : ''" class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/90 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4">
               <div>
                 <p class="text-sm font-semibold text-neutral-900">{{ $t("about.publicTimeline.title") }}</p>
                 <p class="mt-1 text-xs text-neutral-600">{{ $t("about.publicTimeline.description") }}</p>
@@ -230,24 +230,24 @@ onBeforeUnmount(() => {
       </section>
 
       <section aria-label="Glipz">
-            <div class="mt-6 max-w-2xl rounded-3xl border border-lime-300 bg-lime-50/80 p-5 dark:border-lime-800/70 dark:bg-lime-950/20">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700 dark:text-lime-300">
+            <div class="mt-6 max-w-2xl rounded-xl border border-lime-300 bg-lime-50/80 p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">
                 {{ $t("about.activityPubDifference.badge") }}
               </p>
-              <h2 class="mt-2 text-xl font-bold text-lime-900 dark:text-lime-200">
+              <h2 class="mt-2 text-xl font-bold text-lime-900">
                 {{ $t("about.activityPubDifference.title") }}
               </h2>
-              <p class="mt-3 text-sm leading-7 text-lime-900/90 dark:text-lime-100/90 sm:text-base">
+              <p class="mt-3 text-sm leading-7 text-lime-900/90 sm:text-base">
                 {{ $t("about.activityPubDifference.body") }}
               </p>
             </div>
       </section>
 
-      <section class="grid gap-4 md:grid-cols-3">
+      <section class="about-features grid gap-8 md:grid-cols-3">
         <article
           v-for="feature in primaryFeatures"
           :key="feature.title"
-          class="rounded-3xl border border-neutral-200 bg-white p-6"
+          class="py-6"
         >
           <h2 class="text-lg font-semibold text-neutral-900">{{ feature.title }}</h2>
           <p class="mt-3 text-sm leading-7 text-neutral-700">{{ feature.body }}</p>
@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <article class="rounded-3xl border border-neutral-200 bg-white p-6">
+        <article class="py-6">
           <div class="flex items-start justify-between gap-4">
             <div>
               <h2 class="text-xl font-semibold text-neutral-900">{{ $t("about.publicInfo.title") }}</h2>
@@ -271,11 +271,11 @@ onBeforeUnmount(() => {
             </li>
           </ul>
           <div class="mt-5 grid gap-2 text-xs text-neutral-600 sm:grid-cols-2">
-            <div class="rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 dark:border-neutral-200 dark:bg-neutral-800">
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
               <span class="block text-[11px] uppercase tracking-[0.15em] text-neutral-500">{{ $t("common.labels.app") }}</span>
               <span class="mt-1 block font-medium text-neutral-800">{{ APP_VERSION }}</span>
             </div>
-            <div class="rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 dark:border-neutral-200 dark:bg-neutral-800">
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
               <span class="block text-[11px] uppercase tracking-[0.15em] text-neutral-500">{{ $t("common.labels.federation") }}</span>
               <span class="mt-1 block font-medium text-neutral-800">{{ FEDERATION_PROTOCOL_VERSION }}</span>
             </div>
@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
                 :href="item.to"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="rounded-2xl border border-neutral-200 px-4 py-4 transition hover:border-lime-300 hover:bg-lime-50/60"
+                class="rounded-xl border border-neutral-200 px-4 py-4 transition hover:border-lime-300 hover:bg-lime-50/60"
               >
                 <p class="text-sm font-semibold text-neutral-900">{{ item.title }}</p>
                 <p class="mt-1 text-sm leading-6 text-neutral-600">{{ item.body }}</p>
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
               <RouterLink
                 v-else
                 :to="item.to"
-                class="rounded-2xl border border-neutral-200 px-4 py-4 transition hover:border-lime-300 hover:bg-lime-50/60"
+                class="rounded-xl border border-neutral-200 px-4 py-4 transition hover:border-lime-300 hover:bg-lime-50/60"
               >
                 <p class="text-sm font-semibold text-neutral-900">{{ item.title }}</p>
                 <p class="mt-1 text-sm leading-6 text-neutral-600">{{ item.body }}</p>
@@ -304,13 +304,13 @@ onBeforeUnmount(() => {
           </div>
         </article>
 
-        <article class="rounded-3xl border border-neutral-200 bg-white p-6">
+        <article class="py-6">
           <h2 class="text-xl font-semibold text-neutral-900">{{ $t("about.publicInfo.noticesTitle") }}</h2>
           <div v-if="operatorAnnouncements.length" class="mt-5 space-y-3">
             <div
               v-for="item in operatorAnnouncements.slice(0, 3)"
               :key="item.id"
-              class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4"
+              class="rounded-xl border border-neutral-200 bg-neutral-50/80 p-4"
             >
               <p class="text-sm font-semibold text-neutral-900">{{ item.title }}</p>
               <p class="mt-2 text-sm leading-7 text-neutral-700">{{ item.body }}</p>
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
         </article>
       </section>
 
-      <section class="rounded-2xl border border-lime-200 bg-lime-50/70 px-6 py-8 text-center dark:border-lime-800/70 dark:bg-neutral-900 sm:px-8">
+      <section class="rounded-xl border border-lime-200 bg-lime-50/70 px-6 py-8 text-center sm:px-8">
         <h2 class="text-2xl font-semibold text-neutral-900">{{ $t("about.cta.title") }}</h2>
         <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-neutral-700 sm:text-base">
           {{ $t("about.cta.description") }}

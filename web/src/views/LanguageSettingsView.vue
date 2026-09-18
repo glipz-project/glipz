@@ -31,7 +31,7 @@ function selectLocale(next: AppLocale) {
       <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
         {{ $t("app.locale.heading") }}
       </h2>
-      <div class="mt-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+      <div class="mt-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
         <label class="block text-sm">
           <span class="font-medium text-neutral-900">{{ $t("app.locale.heading") }}</span>
           <select

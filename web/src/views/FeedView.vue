@@ -1081,10 +1081,11 @@ function addPollOptionField() {
 
 <template>
   <Teleport to="#app-view-header-slot-desktop">
-    <div class="grid overflow-x-auto" :style="timelineGridStyle">
+    <div class="ui-feed-tabs grid overflow-x-auto" :style="timelineGridStyle">
       <button
         v-for="timeline in visibleTimelines"
         :key="timeline.id"
+        :aria-current="activeTimeline.id === timeline.id ? 'page' : undefined"
         type="button"
         class="relative whitespace-nowrap border-b-2 px-3 py-3 text-base font-semibold transition-colors"
         :class="
@@ -1099,10 +1100,11 @@ function addPollOptionField() {
     </div>
   </Teleport>
   <Teleport to="#app-view-header-slot-mobile">
-    <div class="grid overflow-x-auto" :style="timelineGridStyle">
+    <div class="ui-feed-tabs grid overflow-x-auto" :style="timelineGridStyle">
       <button
         v-for="timeline in visibleTimelines"
         :key="timeline.id"
+        :aria-current="activeTimeline.id === timeline.id ? 'page' : undefined"
         type="button"
         class="relative whitespace-nowrap border-b-2 px-3 py-3 text-base font-semibold transition-colors"
         :class="
@@ -1179,7 +1181,7 @@ function addPollOptionField() {
   </PullToRefresh>
   <RouterLink
     to="/compose"
-    class="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-lime-600 text-white shadow-lg shadow-lime-900/20 transition lg:hidden opacity-100 hover:bg-lime-700"
+    class="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-lime-600 text-white shadow-lg shadow-lime-900/20 transition md:hidden opacity-100 hover:bg-lime-700"
     :aria-label="$t('views.feed.fabComposeAria')"
   >
     <Icon name="pencil" class="h-6 w-6" />

@@ -132,7 +132,7 @@ const indicatorStyle = computed(() => ({
 <template>
   <div
     ref="rootEl"
-    class="relative min-h-full"
+    class="relative"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchcancel="resetPull"
@@ -147,7 +147,7 @@ const indicatorStyle = computed(() => ({
         {{ indicatorText }}
       </div>
     </div>
-    <div class="min-h-full" :style="contentStyle">
+    <div :style="contentStyle">
       <slot :refreshing="refreshing" />
     </div>
   </div>

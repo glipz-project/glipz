@@ -55,7 +55,6 @@ onMounted(() => {
   <div class="mx-auto max-w-6xl px-4 py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">{{ $t("views.adminShell.eyebrow") }}</p>
         <h1 class="mt-2 text-2xl font-bold text-neutral-900">{{ $t("views.adminDashboard.title") }}</h1>
         <p class="mt-2 text-sm text-neutral-600">{{ $t("views.adminDashboard.description") }}</p>
       </div>
@@ -77,7 +76,7 @@ onMounted(() => {
           v-for="card in cards"
           :key="card.label"
           :to="card.to"
-          class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm transition hover:border-lime-300 hover:bg-lime-50/50"
+          class="rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-lime-300 hover:bg-lime-50/50"
         >
           <p class="text-sm font-medium text-neutral-500">{{ card.label }}</p>
           <p class="mt-3 text-3xl font-bold text-neutral-900">{{ card.value }}</p>
@@ -85,7 +84,7 @@ onMounted(() => {
       </div>
 
       <section class="mt-8 grid gap-4 lg:grid-cols-2">
-        <article class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <article class="rounded-xl border border-neutral-200 bg-white p-5">
           <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminDashboard.instanceHeading") }}</h2>
           <dl class="mt-4 space-y-3 text-sm">
             <div class="flex items-center justify-between gap-4">
@@ -104,14 +103,14 @@ onMounted(() => {
           </RouterLink>
         </article>
 
-        <article class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <article class="rounded-xl border border-neutral-200 bg-white p-5">
           <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminDashboard.federationHeading") }}</h2>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="rounded-2xl bg-neutral-50 p-4">
+            <div class="rounded-xl bg-neutral-50 p-4">
               <dt class="text-neutral-500">{{ $t("views.adminDashboard.pendingDeliveries") }}</dt>
               <dd class="mt-2 text-2xl font-bold text-neutral-900">{{ overview.federation_pending }}</dd>
             </div>
-            <div class="rounded-2xl bg-neutral-50 p-4">
+            <div class="rounded-xl bg-neutral-50 p-4">
               <dt class="text-neutral-500">{{ $t("views.adminDashboard.deadDeliveries") }}</dt>
               <dd class="mt-2 text-2xl font-bold text-neutral-900">{{ overview.federation_dead }}</dd>
             </div>

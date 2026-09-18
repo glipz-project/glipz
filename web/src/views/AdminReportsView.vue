@@ -234,7 +234,6 @@ onMounted(() => {
   <div class="mx-auto max-w-6xl px-4 py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">{{ $t("views.adminShell.eyebrow") }}</p>
         <h1 class="mt-2 text-2xl font-bold text-neutral-900">{{ $t("views.adminReports.title") }}</h1>
         <p class="mt-2 text-sm text-neutral-600">{{ $t("views.adminReports.description") }}</p>
       </div>
@@ -260,7 +259,7 @@ onMounted(() => {
           <article
             v-for="row in localReports"
             :key="row.id"
-            class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm"
+            class="rounded-xl border border-neutral-200 bg-white p-5"
           >
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="min-w-0">
@@ -330,7 +329,7 @@ onMounted(() => {
           <article
             v-for="row in federatedReports"
             :key="row.id"
-            class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm"
+            class="rounded-xl border border-neutral-200 bg-white p-5"
           >
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="min-w-0">
@@ -399,7 +398,7 @@ onMounted(() => {
           <article
             v-for="row in dmReports"
             :key="row.id"
-            class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm"
+            class="rounded-xl border border-neutral-200 bg-white p-5"
           >
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="min-w-0">

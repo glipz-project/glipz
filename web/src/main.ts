@@ -23,31 +23,6 @@ function printConsoleSafetyWarning() {
   );
 }
 
-// Disable zoom gestures on mobile webviews/browsers.
-if (typeof document !== "undefined") {
-  document.addEventListener(
-    "gesturestart",
-    (e) => {
-      e.preventDefault();
-    },
-    { passive: false },
-  );
-  document.addEventListener(
-    "gesturechange",
-    (e) => {
-      e.preventDefault();
-    },
-    { passive: false },
-  );
-  document.addEventListener(
-    "gestureend",
-    (e) => {
-      e.preventDefault();
-    },
-    { passive: false },
-  );
-}
-
 printConsoleSafetyWarning();
 initTheme();
 void registerPushServiceWorker();

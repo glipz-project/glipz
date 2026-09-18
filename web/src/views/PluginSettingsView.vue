@@ -65,14 +65,14 @@ function movePlugin(pluginID: string, direction: -1 | 1) {
     </div>
 
     <section class="mt-6 space-y-4">
-      <p v-if="!plugins.length" class="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-500 shadow-sm">
+      <p v-if="!plugins.length" class="rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-500 shadow-sm">
         {{ $t("views.pluginSettings.empty") }}
       </p>
 
       <article
         v-for="(plugin, index) in plugins"
         :key="plugin.id"
-        class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+        class="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0 flex-1">

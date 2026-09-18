@@ -73,7 +73,7 @@ export const ptOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "O tema lima familiar usado pelo Glipz.",
+          description: "Um tema simples com texto azul-marinho e detalhes em laranja.",
         },
         pink: {
           label: "Rosa",

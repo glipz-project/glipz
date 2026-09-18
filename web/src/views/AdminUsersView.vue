@@ -190,12 +190,11 @@ onMounted(() => {
 <template>
   <div class="mx-auto max-w-6xl px-4 py-8">
     <header>
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">{{ $t("views.adminShell.eyebrow") }}</p>
       <h1 class="mt-2 text-2xl font-bold text-neutral-900">{{ $t("views.adminUsers.title") }}</h1>
       <p class="mt-2 text-sm text-neutral-600">{{ $t("views.adminUsers.description") }}</p>
     </header>
 
-    <section class="mt-6 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
       <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto]">
         <label class="block text-sm">
           <span class="mb-1 block font-medium text-neutral-700">{{ $t("views.adminUsers.searchLabel") }}</span>
@@ -233,13 +232,13 @@ onMounted(() => {
     <p v-if="err" class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ err }}</p>
     <p v-if="loading" class="mt-8 text-sm text-neutral-500">{{ $t("app.loading") }}</p>
 
-    <section v-else class="mt-6 rounded-3xl border border-neutral-200 bg-white shadow-sm">
+    <section v-else class="mt-6 rounded-xl border border-neutral-200 bg-white">
       <div class="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.adminUsers.listHeading") }}</h2>
         <span class="text-sm text-neutral-500">{{ total }}{{ $t("views.adminUsers.countSuffix") }}</span>
       </div>
       <div v-if="!users.length" class="px-5 py-8 text-sm text-neutral-500">{{ $t("views.adminUsers.empty") }}</div>
-      <div v-else class="divide-y divide-neutral-200">
+      <div v-else class="ui-admin-list divide-y divide-neutral-200">
         <article v-for="user in users" :key="user.id" class="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
@@ -248,11 +247,12 @@ onMounted(() => {
               <span v-if="user.suspended_at" class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">{{ $t("views.adminUsers.suspended") }}</span>
               <UserBadges :badges="user.badges" size="xs" />
             </div>
-            <p class="mt-1 truncate text-sm text-neutral-500">@{{ user.handle }} · {{ user.email }}</p>
+            <p class="mt-1 break-all text-sm text-neutral-500">@{{ user.handle }}</p>
+            <details class="mt-1"><summary>{{ $t("views.adminUsers.createdAt") }}</summary><p class="break-all text-sm text-neutral-500">{{ user.email }}</p>
             <p class="mt-1 text-xs text-neutral-400">
               {{ $t("views.adminUsers.createdAt") }} {{ formatDate(user.created_at) }}
               <span v-if="user.suspended_at"> · {{ $t("views.adminUsers.suspendedAt") }} {{ formatDate(user.suspended_at) }}</span>
-            </p>
+            </p></details>
           </div>
           <div class="flex flex-wrap gap-2 lg:justify-end">
             <a :href="`/@${user.handle}`" class="rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-lime-50">
@@ -285,7 +285,7 @@ onMounted(() => {
               {{ $t("views.adminUsers.unsuspend") }}
             </button>
           </div>
-          <section v-if="badgeEditorUserID === user.id" class="rounded-2xl border border-lime-100 bg-lime-50/50 p-4 lg:col-span-2">
+          <section v-if="badgeEditorUserID === user.id" class="rounded-xl border border-lime-100 bg-lime-50/50 p-4 lg:col-span-2">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h4 class="text-sm font-semibold text-neutral-900">{{ $t("views.adminUsers.badgesHeading") }}</h4>

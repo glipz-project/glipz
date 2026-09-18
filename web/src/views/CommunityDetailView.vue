@@ -498,7 +498,7 @@ onUnmounted(() => {
   <PullToRefresh :on-refresh="refreshCommunity">
   <div class="border-b border-neutral-200">
     <div
-      class="group relative h-36 overflow-hidden bg-gradient-to-br from-lime-200 via-lime-100 to-neutral-200 sm:h-48"
+      class="group relative h-36 overflow-hidden bg-neutral-100 sm:h-48"
       :class="canManageCommunity ? 'cursor-pointer' : ''"
     >
       <img v-if="community?.header_url" :src="community.header_url" alt="" class="h-full w-full object-cover" />
@@ -672,7 +672,7 @@ onUnmounted(() => {
   </nav>
 
   <section v-if="community && activeTab === 'details'" class="border-b border-neutral-200 px-4 py-5">
-    <div class="rounded-2xl border border-neutral-200 bg-white p-4">
+    <div class="rounded-xl border border-neutral-200 bg-white p-4">
       <div class="flex items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.communityDetail.detailsTitle") }}</h2>
@@ -789,7 +789,7 @@ onUnmounted(() => {
       aria-labelledby="community-edit-modal-title"
     >
       <div class="absolute inset-0 bg-black/50" aria-hidden="true" @click="editingCommunity = false" />
-      <div class="relative z-10 w-full max-w-xl rounded-t-2xl border border-neutral-200 bg-white shadow-xl sm:rounded-2xl">
+      <div class="relative z-10 w-full max-w-xl rounded-t-2xl border border-neutral-200 bg-white shadow-xl sm:rounded-xl">
         <div class="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
           <h2 id="community-edit-modal-title" class="text-base font-semibold text-neutral-900">
             {{ $t("views.communityDetail.editCommunity") }}

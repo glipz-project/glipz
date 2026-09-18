@@ -73,7 +73,7 @@ export const esOverrides: DeepPartial<AppMessageSchema> = {
       presets: {
         default: {
           label: "Glipz",
-          description: "El familiar tema lima utilizado por ZXQ0QXZ.",
+          description: "Un tema limpio con texto azul marino y acentos naranja.",
         },
         pink: {
           label: "Rosa",

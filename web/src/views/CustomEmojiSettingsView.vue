@@ -143,7 +143,7 @@ onMounted(async () => {
     <p v-if="loading" class="mt-6 text-sm text-neutral-500">{{ $t("views.customEmojiSettings.loading") }}</p>
 
     <template v-else>
-      <section class="mt-6 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.customEmojiSettings.createHeading") }}</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
           <label class="block text-sm">
@@ -177,17 +177,17 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section class="mt-6 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.customEmojiSettings.listHeading") }}</h2>
           <span class="text-xs text-neutral-500">{{ items.length }}</span>
         </div>
         <p v-if="!items.length" class="mt-4 text-sm text-neutral-500">{{ $t("views.customEmojiSettings.empty") }}</p>
         <div v-else class="mt-4 space-y-4">
-          <article v-for="item in items" :key="item.id" class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+          <article v-for="item in items" :key="item.id" class="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             <div class="flex items-start justify-between gap-4">
               <div class="flex min-w-0 items-center gap-3">
-                <span class="inline-flex min-w-12 max-w-24 items-center justify-center rounded-2xl bg-white px-2 py-2 shadow-sm">
+                <span class="inline-flex min-w-12 max-w-24 items-center justify-center rounded-xl bg-white px-2 py-2 shadow-sm">
                   <EmojiInline :token="item.shortcode" image-class="h-8 w-8" custom-image-class="h-8 w-auto max-w-20" size-class="text-2xl" />
                 </span>
                 <div class="min-w-0">

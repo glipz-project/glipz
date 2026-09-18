@@ -238,7 +238,7 @@ onMounted(async () => {
       {{ loading ? $t("views.timelineSettings.loading") : $t("views.timelineSettings.saving") }}
     </p>
 
-    <section class="mt-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+    <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
       <div class="flex flex-wrap items-end gap-3">
         <label class="min-w-0 flex-1">
           <span class="text-sm font-medium text-neutral-900">{{ $t("views.timelineSettings.newTimelineLabel") }}</span>
@@ -265,7 +265,7 @@ onMounted(async () => {
       <article
         v-for="(timeline, index) in settings.timelines"
         :key="timeline.id"
-        class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+        class="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
@@ -394,7 +394,7 @@ onMounted(async () => {
 
         <section
           v-if="timeline.kind === 'custom' && timeline.sort === 'recommended'"
-          class="mt-4 rounded-2xl border border-lime-100 bg-lime-50/50 p-4"
+          class="mt-4 rounded-xl border border-lime-100 bg-lime-50/50 p-4"
         >
           <div>
             <h3 class="text-sm font-semibold text-neutral-900">{{ $t("views.timelineSettings.ranking.heading") }}</h3>
@@ -464,7 +464,7 @@ onMounted(async () => {
       </article>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+    <section class="mt-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
       <h2 class="text-base font-semibold text-neutral-900">{{ $t("views.timelineSettings.shareHeading") }}</h2>
       <p class="mt-1 text-sm text-neutral-600">{{ $t("views.timelineSettings.shareLead") }}</p>
       <div class="mt-4 flex flex-wrap gap-2">

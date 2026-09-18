@@ -76,7 +76,7 @@ onActivated(syncThemeFromStorage);
       <h2 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
         {{ $t("views.settings.sections.appearance") }}
       </h2>
-      <div class="mt-3 space-y-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+      <div class="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
         <div>
           <p class="text-sm font-medium text-neutral-900">{{ $t("app.theme.heading") }}</p>
           <p class="mt-1 text-xs text-neutral-500">{{ $t("app.theme.headingDescription") }}</p>
@@ -88,7 +88,7 @@ onActivated(syncThemeFromStorage);
             v-for="opt in themeOptions"
             :key="opt.value"
             type="button"
-            class="rounded-2xl border p-3 text-left transition hover:border-lime-400 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-lime-400/40"
+            class="rounded-xl border p-3 text-left transition hover:border-lime-400 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-lime-400/40"
             :class="themePreference === opt.value ? 'border-lime-500 ring-2 ring-lime-500/20' : 'border-neutral-200'"
             :data-theme-preset="opt.value" :aria-pressed="themePreference === opt.value"
             @click="selectTheme(opt.value)"

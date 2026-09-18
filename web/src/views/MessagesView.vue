@@ -246,7 +246,7 @@ function triggerFilePicker() {
 
 function syncDesktopLayout() {
   if (typeof window === "undefined") return;
-  isDesktop.value = window.matchMedia("(min-width: 1024px)").matches;
+  isDesktop.value = window.matchMedia("(min-width: 768px)").matches;
 }
 
 function onPickFiles(event: Event) {
@@ -927,7 +927,7 @@ watch(dmReceivedTick, () => {
 onMounted(() => {
   syncDesktopLayout();
   if (typeof window !== "undefined") {
-    desktopMediaQuery = window.matchMedia("(min-width: 1024px)");
+    desktopMediaQuery = window.matchMedia("(min-width: 768px)");
     desktopMediaQuery.addEventListener("change", syncDesktopLayout);
   }
   void bootstrap();
@@ -952,9 +952,9 @@ onBeforeUnmount(() => {
       </p>
     </div>
 
-    <div class="flex min-h-0 flex-1 overflow-hidden flex-col lg:flex-row">
+    <div class="flex min-h-0 flex-1 overflow-hidden flex-col md:flex-row">
       <aside
-        class="min-h-0 w-full flex-col border-b border-neutral-200 bg-white lg:flex lg:min-h-0 lg:w-80 lg:border-b-0 lg:border-r"
+        class="min-h-0 w-full flex-col border-b border-neutral-200 bg-white md:flex md:min-h-0 md:w-80 md:border-b-0 md:border-r"
         :class="showThreadListPane ? 'flex' : 'hidden'"
       >
         <div class="px-4 py-3">
@@ -1030,7 +1030,7 @@ onBeforeUnmount(() => {
 
       <div
         class="min-h-0 flex-1 flex-col overflow-hidden"
-        :class="showMessagePane ? 'flex' : 'hidden lg:flex'"
+        :class="showMessagePane ? 'flex' : 'hidden md:flex'"
       >
         <div role="alert" v-if="error" class="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
           {{ error }}
@@ -1055,7 +1055,7 @@ onBeforeUnmount(() => {
 
         <template v-else-if="!identityUnlocked">
           <div class="flex flex-1 items-center justify-center px-6 py-10">
-            <div class="w-full max-w-lg rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <div class="w-full max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
               <h2 class="text-lg font-semibold text-neutral-900">
                 {{ identityConfigured ? $t("views.messages.identityUnlockTitle") : $t("views.messages.identityCreateTitle") }}
               </h2>
@@ -1066,7 +1066,7 @@ onBeforeUnmount(() => {
                     : $t("views.messages.identityCreateBody")
                 }}
               </p>
-              <div v-if="identityError" class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div v-if="identityError" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {{ identityError }}
               </div>
               <form class="mt-5 space-y-4" @submit.prevent="submitIdentityForm">
@@ -1076,7 +1076,7 @@ onBeforeUnmount(() => {
                     v-model="passphrase"
                     type="password"
                     autocomplete="current-password"
-                    class="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+                    class="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
                     :placeholder="identityConfigured ? $t('views.messages.passphrasePlaceholderUnlock') : $t('views.messages.passphrasePlaceholderNew')"
                   />
                 </label>
@@ -1086,13 +1086,13 @@ onBeforeUnmount(() => {
                     v-model="passphraseConfirm"
                     type="password"
                     autocomplete="new-password"
-                    class="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+                    class="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
                     :placeholder="$t('views.messages.passphraseConfirmPlaceholder')"
                   />
                 </label>
                 <button
                   type="submit"
-                  class="w-full rounded-2xl bg-lime-600 px-4 py-3 text-sm font-semibold text-white hover:bg-lime-700 disabled:opacity-50"
+                  class="w-full rounded-xl bg-lime-600 px-4 py-3 text-sm font-semibold text-white hover:bg-lime-700 disabled:opacity-50"
                   :disabled="identityBusy"
                 >
                   {{
@@ -1123,7 +1123,7 @@ onBeforeUnmount(() => {
               <div
                 v-for="m in fedMessages"
                 :key="m.id"
-                class="max-w-[42rem] rounded-2xl border px-4 py-3 text-sm leading-6"
+                class="max-w-[42rem] rounded-xl border px-4 py-3 text-sm leading-6"
                 :class="m.sent_by_me ? 'ml-auto border-neutral-200 bg-neutral-900 text-white' : 'mr-auto border-neutral-200 bg-white text-neutral-900'"
               >
                 <p class="whitespace-pre-wrap">{{ m.text }}</p>
@@ -1157,7 +1157,7 @@ onBeforeUnmount(() => {
               <div v-if="fedActiveThread?.state === 'invited_inbound'" class="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  class="rounded-2xl bg-lime-600 px-5 py-3 text-sm font-semibold text-white hover:bg-lime-700 disabled:opacity-50"
+                  class="rounded-xl bg-lime-600 px-5 py-3 text-sm font-semibold text-white hover:bg-lime-700 disabled:opacity-50"
                   :disabled="fedSendBusy"
                   @click="acceptFederationThread"
                 >
@@ -1165,7 +1165,7 @@ onBeforeUnmount(() => {
                 </button>
                 <button
                   type="button"
-                  class="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
+                  class="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
                   :disabled="fedSendBusy"
                   @click="rejectFederationThread"
                 >
@@ -1177,7 +1177,7 @@ onBeforeUnmount(() => {
               <label class="sr-only" for="fed-dm-input">連合DM</label>
               <button
                 type="button"
-                class="shrink-0 rounded-2xl border border-neutral-200 bg-white px-3 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-50"
+                class="shrink-0 rounded-xl border border-neutral-200 bg-white px-3 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-50"
                 :disabled="fedSendBusy"
                 @click="triggerFedFilePicker"
                 title="ファイルを添付"
@@ -1189,11 +1189,11 @@ onBeforeUnmount(() => {
                 v-model="fedComposerText"
                 rows="2"
                 placeholder="メッセージを入力…"
-                class="min-h-[2.75rem] w-full resize-none rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition placeholder:text-neutral-400 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+                class="min-h-[2.75rem] w-full resize-none rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition placeholder:text-neutral-400 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
               />
               <button
                 type="submit"
-                class="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
+                class="shrink-0 rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
                 :disabled="fedSendBusy || (!fedComposerText.trim() && !fedPendingFiles.length)"
               >
                 送信
@@ -1224,7 +1224,7 @@ onBeforeUnmount(() => {
             <div class="flex items-center gap-3">
               <button
                 type="button"
-                class="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 lg:hidden"
+                class="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 md:hidden"
                 :aria-label="$t('views.messages.backToThreadsAria')"
                 @click="router.push('/messages')"
               >
@@ -1247,7 +1247,7 @@ onBeforeUnmount(() => {
                 {{ notice }}
               </div>
               <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4">
-              <div v-if="!timelineItems.length" class="mx-auto mt-10 max-w-md rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-5 text-center text-sm text-neutral-500">
+              <div v-if="!timelineItems.length" class="mx-auto mt-10 max-w-md rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-5 text-center text-sm text-neutral-500">
                 {{ $t("views.messages.emptyThread") }}
               </div>
               <div v-else class="space-y-3">
@@ -1258,19 +1258,19 @@ onBeforeUnmount(() => {
                   :class="item.sent_by_me ? 'justify-end' : 'justify-start'"
                 >
                   <div
-                    class="max-w-[min(100%,42rem)] rounded-2xl px-4 py-3 shadow-sm"
-                    :class="item.sent_by_me ? 'bg-lime-600 text-white' : 'border border-neutral-200 bg-white text-neutral-900'"
+                    class="ui-message-bubble max-w-[min(100%,42rem)] rounded-xl px-4 py-3"
+                    :class="item.sent_by_me ? 'bg-lime-50 text-neutral-900' : 'bg-neutral-50 text-neutral-900'"
                   >
-                    <p class="mb-1 text-[11px]" :class="item.sent_by_me ? 'text-lime-100' : 'text-neutral-400'">
+                    <p class="mb-1 text-[11px]" :class="'text-neutral-500'">
                       {{ item.message.sender_display_name }} · {{ formatDateTime(item.message.created_at, { dateStyle: "short", timeStyle: "short" }) }}
                     </p>
                     <UserBadges :badges="item.message.sender_badges" size="xs" />
-                    <p class="whitespace-pre-wrap break-words text-sm leading-6">{{ item.message.decrypted_text }}</p>
+                    <p class="whitespace-pre-wrap break-words text-base leading-7">{{ item.message.decrypted_text }}</p>
                     <div class="mt-2 flex flex-wrap justify-end gap-2">
                       <button
                         type="button"
                         class="rounded-full border px-2.5 py-1 text-[11px] font-semibold"
-                        :class="item.sent_by_me ? 'border-white/40 text-white hover:bg-white/10' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'"
+                        :class="'border-neutral-200 text-neutral-600 hover:bg-neutral-50'"
                         @click="startDMReport(item.message)"
                       >
                         {{ $t("views.messages.reportMessage") }}
@@ -1326,7 +1326,7 @@ onBeforeUnmount(() => {
                         <button
                           type="button"
                           class="shrink-0 rounded-full border px-3 py-1 text-xs font-semibold"
-                          :class="item.sent_by_me ? 'border-white/40 text-white hover:bg-white/10' : 'border-neutral-200 text-neutral-700 hover:bg-white'"
+                          :class="'border-neutral-200 text-neutral-700 hover:bg-white'"
                           :disabled="attachmentBusyKey === `${item.message.id}:${index}`"
                           @click="saveAttachment(item.message, attachment, index)"
                         >
@@ -1354,8 +1354,8 @@ onBeforeUnmount(() => {
               <div class="flex flex-col gap-3">
                 <textarea
                   v-model="composerText"
-                  rows="4"
-                  class="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
+                  rows="2"
+                  class="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40"
                   :placeholder="$t('views.messages.composerPlaceholder')"
                 />
                 <div class="flex flex-wrap items-center justify-between gap-3">

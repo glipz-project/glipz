@@ -389,7 +389,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-0 h-full w-full min-w-0 text-neutral-900">
+  <div class="w-full min-w-0 text-neutral-900">
     <header
       class="sticky top-0 z-10 flex h-12 items-center gap-3 border-b border-neutral-200 bg-white/90 px-3 backdrop-blur supports-[backdrop-filter]:bg-white/70"
     >

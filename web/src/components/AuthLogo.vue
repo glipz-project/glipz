@@ -10,7 +10,7 @@ const logoImg = computed(() => (resolvedTheme?.value ?? fallbackTheme) === "dark
 </script>
 
 <template>
-  <div class="mb-2 flex justify-center">
+  <div class="ui-auth-logo flex justify-center">
     <img :src="logoImg" alt="Glipz" class="h-16 w-auto object-contain" />
   </div>
 </template>

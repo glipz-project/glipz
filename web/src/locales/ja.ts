@@ -65,7 +65,7 @@ export const jaMessages = {
       presets: {
         default: {
           label: "Glipz",
-          description: "これまでの Glipz らしいライム系の標準テーマです。",
+          description: "紺の文字とオレンジのアクセントを使った、読みやすい標準テーマです。",
         },
         pink: {
           label: "ピンク",

@@ -181,7 +181,6 @@ onMounted(() => {
   <div class="mx-auto max-w-6xl px-4 py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-lime-700">{{ $t("views.adminShell.eyebrow") }}</p>
         <h1 class="mt-2 text-2xl font-bold text-neutral-900">{{ $t("views.adminLegalRequests.title") }}</h1>
         <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">{{ $t("views.adminLegalRequests.description") }}</p>
       </div>
@@ -192,7 +191,7 @@ onMounted(() => {
 
     <p v-if="err" class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ err }}</p>
 
-    <form class="mt-6 grid gap-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm md:grid-cols-2" @submit.prevent="createRequest">
+    <form class="mt-6 grid gap-4 rounded-xl border border-neutral-200 bg-white p-5 md:grid-cols-2" @submit.prevent="createRequest">
       <label class="text-sm text-neutral-700">
         <span class="font-medium">{{ $t("views.adminLegalRequests.agencyName") }}</span>
         <input v-model="form.agency_name" required maxlength="200" class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40" />
@@ -233,7 +232,7 @@ onMounted(() => {
       </label>
       <label class="text-sm text-neutral-700 md:col-span-2">
         <span class="font-medium">{{ $t("views.adminLegalRequests.legalBasis") }}</span>
-        <textarea v-model="form.legal_basis" maxlength="2000" rows="3" class="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40" />
+        <textarea v-model="form.legal_basis" maxlength="2000" rows="3" class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40" />
       </label>
       <label class="text-sm text-neutral-700">
         <span class="font-medium">{{ $t("views.adminLegalRequests.dataTypes") }}</span>
@@ -252,7 +251,7 @@ onMounted(() => {
 
     <p v-if="loading" class="mt-8 text-sm text-neutral-500">{{ $t("views.adminLegalRequests.loading") }}</p>
     <div v-else class="mt-6 space-y-3">
-      <article v-for="row in items" :key="row.id" class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <article v-for="row in items" :key="row.id" class="rounded-xl border border-neutral-200 bg-white p-5">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">{{ row.request_type }} · {{ row.status }}</p>
@@ -280,7 +279,7 @@ onMounted(() => {
             {{ $t("views.adminLegalRequests.createHold") }}
           </button>
         </div>
-        <form v-if="holdForm.request_id === row.id" class="mt-4 grid gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 md:grid-cols-2" @submit.prevent="createHold(row)">
+        <form v-if="holdForm.request_id === row.id" class="mt-4 grid gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 md:grid-cols-2" @submit.prevent="createHold(row)">
           <label class="text-xs text-neutral-700">
             <span class="font-semibold">{{ $t("views.adminLegalRequests.resourceType") }}</span>
             <select v-model="holdForm.resource_type" class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40">
@@ -305,7 +304,7 @@ onMounted(() => {
           </label>
           <label class="text-xs text-neutral-700 md:col-span-2">
             <span class="font-semibold">{{ $t("views.adminLegalRequests.holdReason") }}</span>
-            <textarea v-model="holdForm.reason" rows="2" maxlength="2000" class="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40" />
+            <textarea v-model="holdForm.reason" rows="2" maxlength="2000" class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-lime-500/30 transition focus:border-lime-400 focus:ring-2 focus:ring-lime-400/40" />
           </label>
           <div class="md:col-span-2">
             <button type="submit" class="rounded-full bg-lime-600 px-4 py-2 text-xs font-semibold text-white hover:bg-lime-700">

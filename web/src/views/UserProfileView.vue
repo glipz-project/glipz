@@ -964,7 +964,7 @@ watch(handleParam, () => void loadAll());
       </div>
     </div>
   </Teleport>
-  <div class="min-h-0 h-full w-full min-w-0 text-neutral-900">
+  <div class="w-full min-w-0 text-neutral-900">
     <header
       v-if="!profileHeaderInApp"
       class="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-neutral-200 bg-white/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-white/70"
@@ -996,7 +996,7 @@ watch(handleParam, () => void loadAll());
     <template v-if="profile">
       <div class="relative">
         <div
-          class="group relative h-36 w-full overflow-hidden bg-gradient-to-br from-lime-200 via-lime-100 to-neutral-200 sm:h-44"
+          class="group relative h-36 w-full overflow-hidden bg-neutral-100 sm:h-44"
           :class="profile.is_me ? 'cursor-pointer' : ''"
           :style="safeHeaderStyle(profile.header_url)"
         >
@@ -1062,7 +1062,7 @@ watch(handleParam, () => void loadAll());
               <button
                 v-if="!profile.is_me && viewerAuthed"
                 type="button"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-lime-700 transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-lime-400 disabled:opacity-50 dark:border-neutral-200 dark:bg-neutral-900 dark:text-lime-400 dark:hover:bg-neutral-800"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-lime-700 transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-lime-400 disabled:opacity-50"
                 :title="$t('views.userProfile.message')"
                 :disabled="dmOpenBusy"
                 @click="openDMFromProfile"
@@ -1138,7 +1138,7 @@ watch(handleParam, () => void loadAll());
                 class="flex min-w-0 items-center gap-2 rounded-md py-0.5 text-sm text-lime-700 hover:underline"
               >
                 <span
-                  class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-neutral-100 ring-1 ring-neutral-200/80 dark:bg-neutral-800 dark:ring-neutral-600"
+                  class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-neutral-100 ring-1 ring-neutral-200/80 dark:ring-neutral-600"
                 >
                   <img
                     v-if="!profileLinkFaviconBroken[u] && profileFaviconSrc(u)"
@@ -1151,7 +1151,7 @@ watch(handleParam, () => void loadAll());
                     referrerpolicy="no-referrer"
                     @error="onProfileLinkFaviconError(u)"
                   />
-                  <span v-else class="text-[11px] leading-none text-neutral-500 dark:text-neutral-400" aria-hidden="true">&#x1F310;</span>
+                  <span v-else class="text-[11px] leading-none text-neutral-500" aria-hidden="true">&#x1F310;</span>
                 </span>
                 <span class="min-w-0 break-all">{{ shortUrlLabel(u) }}</span>
               </a>
@@ -1183,7 +1183,7 @@ watch(handleParam, () => void loadAll());
                 class="flex min-w-0 items-center gap-2 rounded-md py-0.5 text-sm text-lime-700 hover:underline"
               >
                 <span
-                  class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-neutral-100 ring-1 ring-neutral-200/80 dark:bg-neutral-800 dark:ring-neutral-600"
+                  class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-neutral-100 ring-1 ring-neutral-200/80 dark:ring-neutral-600"
                 >
                   <img
                     v-if="!profileLinkFaviconBroken[u] && profileFaviconSrc(u)"
@@ -1196,7 +1196,7 @@ watch(handleParam, () => void loadAll());
                     referrerpolicy="no-referrer"
                     @error="onProfileLinkFaviconError(u)"
                   />
-                  <span v-else class="text-[11px] leading-none text-neutral-500 dark:text-neutral-400" aria-hidden="true">&#x1F310;</span>
+                  <span v-else class="text-[11px] leading-none text-neutral-500" aria-hidden="true">&#x1F310;</span>
                 </span>
                 <span class="min-w-0 break-all">{{ shortUrlLabel(u) }}</span>
               </a>
@@ -1205,7 +1205,7 @@ watch(handleParam, () => void loadAll());
         </div>
       </div>
 
-      <div class="sticky top-0 z-[5] border-b border-neutral-200 bg-white/95 px-2 pt-1 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <div class="sticky top-0 z-[5] border-b border-neutral-200 bg-white px-2 pt-1">
         <div class="profile-tabs-scroll flex flex-nowrap gap-1 overflow-x-auto">
           <button
             type="button"
@@ -1438,13 +1438,13 @@ watch(handleParam, () => void loadAll());
       @click.self="closeCropModal"
     >
       <div
-        class="relative w-full max-w-2xl rounded-2xl border border-neutral-200 bg-white p-4 shadow-xl dark:border-neutral-200 dark:bg-neutral-900"
+        class="relative w-full max-w-2xl rounded-xl border border-neutral-200 bg-white p-4 shadow-xl"
       >
-        <h2 class="text-lg font-bold text-neutral-900 dark:text-neutral-100">{{ $t("views.userProfile.cropTitle") }}</h2>
+        <h2 class="text-lg font-bold text-neutral-900">{{ $t("views.userProfile.cropTitle") }}</h2>
         <p class="mt-1 text-sm text-neutral-500">
           {{ cropKind === "avatar" ? $t("views.userProfile.cropHintAvatar") : $t("views.userProfile.cropHintHeader") }}
         </p>
-        <div class="mt-3 max-h-[min(65vh,520px)] w-full overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
+        <div class="mt-3 max-h-[min(65vh,520px)] w-full overflow-hidden rounded-lg bg-neutral-100">
           <img
             ref="cropImageRef"
             :key="cropKey"
@@ -1457,7 +1457,7 @@ watch(handleParam, () => void loadAll());
         <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
-            class="rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            class="rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
             :disabled="uploadBusy"
             @click="closeCropModal"
           >
@@ -1486,15 +1486,15 @@ watch(handleParam, () => void loadAll());
       @click.self="closeProfileEditModal"
     >
       <div
-        class="relative w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-4 shadow-xl dark:border-neutral-200 dark:bg-neutral-900"
+        class="relative w-full max-w-md rounded-xl border border-neutral-200 bg-white p-4 shadow-xl"
       >
         <div class="flex items-start justify-between gap-2">
-          <h2 id="profile-edit-title" class="text-lg font-bold text-neutral-900 dark:text-neutral-100">
+          <h2 id="profile-edit-title" class="text-lg font-bold text-neutral-900">
             {{ $t("views.userProfile.editModalTitle") }}
           </h2>
           <button
             type="button"
-            class="rounded-full p-1.5 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            class="rounded-full p-1.5 text-neutral-500 hover:bg-neutral-100"
             :aria-label="$t('views.userProfile.closeAria')"
             :disabled="saving"
             @click="closeProfileEditModal"
@@ -1507,28 +1507,28 @@ watch(handleParam, () => void loadAll());
         </p>
         <div class="mt-4 space-y-3">
           <div>
-            <label for="userprofileview-field-1" class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.displayNameLabel") }}</label>
+            <label for="userprofileview-field-1" class="block text-xs font-medium text-neutral-600">{{ $t("views.userProfile.displayNameLabel") }}</label>
             <input id="userprofileview-field-1"
               v-model="editDisplayName"
               type="text"
               maxlength="50"
-              class="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400 dark:border-neutral-200 dark:bg-neutral-950 dark:text-neutral-100"
+              class="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400"
               :placeholder="$t('views.userProfile.displayNamePlaceholder')"
               autocomplete="nickname"
             />
             <p class="mt-1 text-xs text-neutral-500">{{ $t("views.userProfile.displayNameHint") }}</p>
           </div>
           <div>
-            <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.handleLabel") }}</label>
+            <label class="block text-xs font-medium text-neutral-600">{{ $t("views.userProfile.handleLabel") }}</label>
             <div
-              class="mt-1 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 focus-within:border-lime-400 focus-within:ring-1 focus-within:ring-lime-400 dark:border-neutral-200 dark:bg-neutral-950"
+              class="mt-1 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 focus-within:border-lime-400 focus-within:ring-1 focus-within:ring-lime-400"
             >
               <span class="shrink-0 text-sm text-neutral-500">@</span>
               <input
                 v-model="editHandle"
                 type="text"
                 maxlength="30"
-                class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-neutral-900 outline-none dark:text-neutral-100"
+                class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-neutral-900 outline-none"
                 :placeholder="$t('views.userProfile.handlePlaceholder')"
                 spellcheck="false"
                 autocapitalize="off"
@@ -1540,17 +1540,17 @@ watch(handleParam, () => void loadAll());
             </p>
           </div>
           <div>
-            <label for="userprofileview-field-2" class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{ $t("views.userProfile.bioLabel") }}</label>
+            <label for="userprofileview-field-2" class="block text-xs font-medium text-neutral-600">{{ $t("views.userProfile.bioLabel") }}</label>
             <textarea id="userprofileview-field-2"
               v-model="editBio"
               rows="4"
               maxlength="500"
-              class="mt-1 w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400 dark:border-neutral-200 dark:bg-neutral-950 dark:text-neutral-100"
+              class="mt-1 w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400"
               :placeholder="$t('views.userProfile.bioPlaceholder')"
             />
           </div>
           <div class="space-y-2">
-            <label class="flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 dark:border-neutral-200 dark:bg-neutral-950 dark:text-neutral-100">
+            <label class="flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
               <input
                 v-model="editIsBot"
                 type="checkbox"
@@ -1558,10 +1558,10 @@ watch(handleParam, () => void loadAll());
               />
               <span>
                 <span class="block font-medium">{{ $t("views.userProfile.botCheckboxLabel") }}</span>
-                <span class="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">{{ $t("views.userProfile.botCheckboxHint") }}</span>
+                <span class="mt-0.5 block text-xs text-neutral-500">{{ $t("views.userProfile.botCheckboxHint") }}</span>
               </span>
             </label>
-            <label class="flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 dark:border-neutral-200 dark:bg-neutral-950 dark:text-neutral-100">
+            <label class="flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
               <input
                 v-model="editIsAI"
                 type="checkbox"
@@ -1569,22 +1569,22 @@ watch(handleParam, () => void loadAll());
               />
               <span>
                 <span class="block font-medium">{{ $t("views.userProfile.aiCheckboxLabel") }}</span>
-                <span class="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">{{ $t("views.userProfile.aiCheckboxHint") }}</span>
+                <span class="mt-0.5 block text-xs text-neutral-500">{{ $t("views.userProfile.aiCheckboxHint") }}</span>
               </span>
             </label>
           </div>
           <div>
-            <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400">{{
+            <label class="block text-xs font-medium text-neutral-600">{{
               $t("views.userProfile.externalUrlsLabel")
             }}</label>
-            <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{{ $t("views.userProfile.externalUrlsHint") }}</p>
+            <p class="mt-1 text-xs text-neutral-500">{{ $t("views.userProfile.externalUrlsHint") }}</p>
             <div class="mt-2 space-y-2">
               <div v-for="(_, i) in editProfileUrls" :key="i" class="flex items-center gap-2">
                 <input
                   v-model="editProfileUrls[i]"
                   type="text"
                   inputmode="url"
-                  class="min-w-0 flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400 dark:border-neutral-200 dark:bg-neutral-950 dark:text-neutral-100"
+                  class="min-w-0 flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-lime-400 focus:outline-none focus:ring-1 focus:ring-lime-400"
                   :placeholder="$t('views.userProfile.externalUrlPlaceholder')"
                   spellcheck="false"
                   autocapitalize="off"
@@ -1593,7 +1593,7 @@ watch(handleParam, () => void loadAll());
                 <button
                   v-if="editProfileUrls.length < 5 && i === editProfileUrls.length - 1"
                   type="button"
-                  class="shrink-0 rounded-full border border-neutral-200 bg-white px-3 py-2 text-base font-semibold leading-none text-neutral-800 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-200 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                  class="shrink-0 rounded-full border border-neutral-200 bg-white px-3 py-2 text-base font-semibold leading-none text-neutral-800 hover:bg-neutral-50 disabled:opacity-50"
                   :disabled="saving"
                   :aria-label="$t('views.userProfile.addExternalUrlAria')"
                   @click="addProfileUrlField"
@@ -1607,7 +1607,7 @@ watch(handleParam, () => void loadAll());
         <div class="mt-5 flex flex-wrap justify-end gap-2">
           <button
             type="button"
-            class="rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            class="rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
             :disabled="saving"
             @click="closeProfileEditModal"
           >
