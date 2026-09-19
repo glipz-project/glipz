@@ -1,0 +1,81 @@
+name: glipz-dev
+
+services:
+  # Development-only compose stack. Bind published ports to localhost so these
+  # services are not exposed when testing on a shared network. Do not use this
+  # file as-is for production: credentials are fixed for local development.
+  # Run scripts/start-dev.ps1 to create local settings and start the stack.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: glipz
+      POSTGRES_PASSWORD: glipz_dev
+      POSTGRES_DB: glipz
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U glipz -d glipz"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.29.7
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/api/v1/info"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgres://glipz:glipz_dev@postgres:5432/glipz?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_FROM_EMAIL: no-reply@glipz.local
+      SMTP_FROM_NAME: Glipz
+      LEGAL_DOCS_DIR: /app/data/legal-docs
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      # The backend image runs as uid/gid 10001. If this bind mount already
+      # exists on the host, make sure it is writable by 10001:10001.
+      - ./data/media:/app/data/media
+      - ./data/legal-docs:/app/data/legal-docs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+
+volumes:
+  pgdata:

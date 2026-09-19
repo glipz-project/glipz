@@ -1,0 +1,16 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$GLIPZ_DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000"
+	@private path /debug/*
+	respond @private 404
+	reverse_proxy backend:8080 {
+		# Direct internet entry point: discard client-supplied forwarding headers.
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		flush_interval -1
+	}
+}

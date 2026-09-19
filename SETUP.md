@@ -16,7 +16,7 @@ Install these before starting:
 | **Docker & Docker Compose** | Yes | Runs PostgreSQL, Redis, Mailpit, Backend |
 | **Node.js 22+** | Yes (frontend) | Matches `web/package.json` `engines`; Docker image uses Node 22 |
 | **npm** | Yes (frontend) | Comes with Node.js |
-| **Go 1.26.2+** | No | Only if running backend outside Docker |
+| **Go 1.26.8+** | No | Only if running backend outside Docker |
 | **Media storage** | Yes | Server-local folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, AWS S3, etc.) |
 
 ---
@@ -36,19 +36,21 @@ Copy the template and edit it:
 
 ```bash
 # macOS / Linux
-cp .env.example .env
+cp .env.dev.example .env.dev
 
 # Windows PowerShell
-Copy-Item .env.example .env
+Copy-Item .env.dev.example .env.dev
 ```
 
 ### Required Variables
 
-At minimum, set these in `.env`:
+At minimum, set these in `.env.dev`:
 
 ```env
 # Generate with: openssl rand -base64 48
 JWT_SECRET=
+# Generate with: openssl rand -base64 32
+GLIPZ_FEDERATION_KEY_SEED=
 
 # Either use a server-local folder:
 GLIPZ_STORAGE_MODE=local
@@ -113,15 +115,12 @@ from the frontend origin. For public federation, set
 signatures are independent from JWT rotation. If neither is set, Glipz derives
 the federation key from `JWT_SECRET` for compatibility.
 
-For production, prefer the backend media proxy (`GLIPZ_MEDIA_PROXY_MODE=proxy`).
-It forces active content types such as SVG, HTML, XML, and JavaScript to download
-instead of rendering inline. If you switch to direct object-storage or CDN media
-delivery, configure that endpoint to apply equivalent `Content-Disposition: attachment`
-and `X-Content-Type-Options: nosniff` behavior for those types.
+Media is always served through the backend authorization proxy. Keep S3 buckets
+private; do not configure a public CDN route that bypasses access checks.
 
 ### Patreon fan club (Optional)
 
-Patreon is disabled by default. Register an API client at Patreon, then enable it explicitly (redirect URI must match your deployment; see comments in [.env.example](.env.example)):
+Patreon is disabled by default. Register an API client at Patreon, then enable it explicitly (redirect URI must match your deployment; see comments in [.env.reference.example](.env.reference.example)):
 
 ```env
 PATREON_ENABLED=true
@@ -136,17 +135,18 @@ For `npm run build`, create `web/.env.production` when you need frontend
 build-time variables such as `VITE_API_URL`, `VITE_NATIVE_API_URL`,
 `VITE_ALLOWED_MEDIA_BASE_URLS`, or `VITE_ALLOWED_DM_ATTACHMENT_BASE_URLS`.
 Same-origin deployments can usually omit `VITE_API_URL`; see the frontend
-section of [.env.example](.env.example) for the available variables.
+section of [.env.reference.example](.env.reference.example) for the available variables.
 
 ---
 
 ## Step 3: Start the Backend Stack
 
 ```bash
-docker compose up --build
+docker compose --env-file .env.dev -f docker-compose.dev.yml up --build
 ```
 
-This compose stack is for local development only. It uses fixed development
+This explicitly selected development stack is for local development only.
+The default `docker-compose.yml` is production; never merge the two files. It uses fixed development
 credentials and localhost-bound ports; do not reuse it as-is for production.
 
 This starts:
@@ -244,7 +244,7 @@ Instead of running the dev server, serve the built frontend directly:
    npm run build
    ```
 
-2. Add to `.env`:
+2. Add to `.env.dev`:
    ```env
    STATIC_WEB_ROOT=../web/dist
    ```
@@ -297,7 +297,7 @@ These are disabled unless configured:
 | **Legal documents** | `LEGAL_DOCS_DIR` |
 | **Patreon** | `PATREON_ENABLED=true`, `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, optional `PATREON_REDIRECT_URI` |
 
-See [.env.example](.env.example) for all options.
+See [.env.reference.example](.env.reference.example) for all options.
 
 ---
 
@@ -305,7 +305,7 @@ See [.env.example](.env.example) for all options.
 
 ### Backend exits immediately
 
-- `.env` file exists
+- `.env.dev` file exists
 - `JWT_SECRET` is set
 - `GLIPZ_STORAGE_MODE` is either `local` or `s3`
 - For local storage, `GLIPZ_LOCAL_STORAGE_PATH` is writable by the backend
@@ -314,12 +314,12 @@ See [.env.example](.env.example) for all options.
 ### Frontend loads but API fails
 
 - Backend is running on port 8080
-- `docker compose up` completed without errors
+- `docker compose --env-file .env.dev -f docker-compose.dev.yml up` completed without errors
 - No custom `VITE_PROXY_TARGET` overriding the default
 
 ### Docker build sees missing Go methods or old files
 
-- Re-run `docker compose build backend` after confirming `go test ./internal/...`
+- Re-run `docker compose --env-file .env.dev -f docker-compose.dev.yml build backend` after confirming `go test ./internal/...`
   passes locally.
 - If using Jujutsu (`jj`), make sure the `main` bookmark points at the commit
   containing all related files, not an older partial commit. `jj status` should
@@ -354,7 +354,7 @@ See [.env.example](.env.example) for all options.
 
 - The related provider flag is enabled: `PATREON_ENABLED=true`
 - Credential-backed providers also have credentials set (`PATREON_*`)
-- Restart the backend after changing `.env`, then reload the frontend
+- Restart the backend after changing `.env.dev`, then reload the frontend
 
 ### Emails not sending
 
@@ -388,7 +388,7 @@ Before going live:
 - [README.md](README.md) — Project overview
 - [PLUGINS.md](PLUGINS.md) — Sidebar widget plugin development
 - [DEPLOY.md](DEPLOY.md) — Production deployment
-- [.env.example](.env.example) — All configuration options
+- [.env.reference.example](.env.reference.example) — All configuration options
 - [LICENSE](LICENSE) — AGPLv3 license
 
 ---

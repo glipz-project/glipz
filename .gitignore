@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+!.env.dev.example
+!.env.reference.example
 .npmrc
 .npmrc.*
 web/.env.production
@@ -23,3 +25,6 @@ web/ios/
 # Python test-script caches
 __pycache__/
 *.py[cod]
+
+# Production backups and generated secrets
+backups/

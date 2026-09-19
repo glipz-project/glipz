@@ -9,7 +9,7 @@
 
 ## What is Glipz?
 
-Glipz is a **social platform for independently operated communities** and a **high-performance federation protocol** (glipz-federation/3). 
+Glipz is a **social platform for independently operated communities** and a **high-performance federation protocol** (glipz-federation/3).
 
 Unlike generic protocols, Glipz is designed for speed, security (Ed25519), and optional gated post media (Unlock). It serves as both a full-featured social network and a reference implementation for the Glipz Federation Protocol.
 
@@ -107,7 +107,7 @@ ranking weights for custom timelines.
 ### Fan club (Patreon; optional)
 
 - **Disabled by default:** set `PATREON_ENABLED=true` to expose the related UI and API behavior. Disabled providers are hidden in settings/composer/unlock UI and rejected server-side.
-- **Patreon:** link your campaign via OAuth; configure `PATREON_ENABLED=true` plus `PATREON_CLIENT_ID` / `PATREON_CLIENT_SECRET` in `.env` (see [.env.example](.env.example)); callback path is documented there.
+- **Patreon:** link your campaign via OAuth; configure `PATREON_ENABLED=true` plus `PATREON_CLIENT_ID` / `PATREON_CLIENT_SECRET` in `.env` (see [.env.reference.example](.env.reference.example)); callback path is documented there.
 - **Federation:** Patreon-locked federated posts can be unlocked from the viewer instance when that instance has Patreon enabled and the viewer has connected Patreon there. The viewer instance verifies the campaign/tier with Patreon and sends a short-lived `entitlement_jwt` to the origin unlock endpoint.
 - Other membership platforms (e.g. SubscribeStar, Ko-fi, Fansly, Ci-en, pixiv FANBOX, Fantia) are not integrated: most lack a stable, third-party–safe API to verify a viewer’s subscription in real time, or are unsuitable for server-side checks under Glipz’s model.
 
@@ -162,90 +162,55 @@ ranking weights for custom timelines.
 
 ---
 
-## Quick Start
+## Self-host Glipz in production
 
-### Prerequisites
+The default `docker-compose.yml` is a **production single-host deployment**.
+Anyone can clone this repository and run an independent instance on their own
+public domain. No official-instance domain, credentials, or AWS account is built in.
 
-- Docker & Docker Compose
-- Node.js 22+ (for frontend development; matches `web/package.json` engines)
-- Go 1.26.8+ (optional, for backend development outside Docker)
-- Media storage: either a server-local folder or an S3-compatible bucket
-
-### 1. Clone and configure
+Requirements: Linux, Docker Engine with Compose v2+, Python 3, a domain pointing
+to the server, and a real SMTP provider. Node and Go are needed on the host only
+for development; the production image builds both components in Docker.
 
 ```bash
 git clone https://github.com/glipz-project/glipz.git
 cd glipz
-cp .env.example .env
+python3 scripts/setup-production.py --domain social.example.com --email admin@example.com
+# Edit .env: configure SMTP and verified sender; review data/legal-docs policies.
+python3 scripts/check-production.py
+docker compose up -d --build --wait --wait-timeout 300
 ```
 
-Edit `.env` with your settings. At minimum:
+Open `https://social.example.com`. Caddy manages HTTPS; only ports 80/443 are
+published. PostgreSQL and Redis are private, media persists in a Docker volume,
+and passwords/signing keys are generated separately for each installation.
+The first account is **not automatically an administrator**.
 
-```env
-# Generate with: openssl rand -base64 48
-JWT_SECRET=
+See [DEPLOY.md](DEPLOY.md) for DNS, Lightsail, administrator setup, backups,
+restoration, upgrades and migration from the old development stack.
 
-# Simplest single-server setup:
-GLIPZ_STORAGE_MODE=local
-GLIPZ_LOCAL_STORAGE_PATH=./data/media
-```
+### Local development
 
-For S3-compatible storage instead:
-
-```env
-GLIPZ_STORAGE_MODE=s3
-S3_ENDPOINT=https://s3.your-provider.example
-S3_PUBLIC_ENDPOINT=https://s3.your-provider.example
-S3_REGION=your-region
-S3_ACCESS_KEY=your-access-key
-S3_SECRET_KEY=your-secret-key
-S3_BUCKET=your-bucket
-S3_USE_PATH_STYLE=true-or-false-for-your-provider
-```
-
-In local mode, the backend stores uploaded files on disk and serves them from `/api/v1/media/object/*`. With Docker Compose, `./data/media` is mounted into the backend container so uploads survive container rebuilds.
-
-Cloudflare R2 uses `S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com`, `S3_REGION=auto`, and path-style access. Keep the bucket private. Media is always served through the authorization proxy; legacy direct/public-base settings do not bypass it. Retire existing public bucket/CDN routes and purge their caches when upgrading.
-
-Before enabling public federation, generate dedicated signing key material with
-`openssl rand -base64 32` and set `GLIPZ_FEDERATION_KEY_SEED`. Without it, Glipz
-keeps compatibility by deriving the federation key from `JWT_SECRET`.
-
-### 2. Start the stack
+Development is opt-in and uses a separate Compose project and `.env.dev`:
 
 ```bash
-docker compose up --build
+cp .env.dev.example .env.dev
+# Fill JWT_SECRET (openssl rand -base64 48) and GLIPZ_FEDERATION_KEY_SEED
+# (openssl rand -base64 32), then:
+mkdir -p data/media data/legal-docs
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d --build --wait
 ```
 
-This compose stack is for local development only. It uses fixed development
-credentials and localhost-bound ports; use [DEPLOY.md](DEPLOY.md) for production.
-
-Services started:
-- **Backend API**: http://localhost:8080
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
-- **Mailpit** (dev email): http://localhost:8025
-
-### 3. Start the frontend
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-Frontend: http://localhost:5173
-
-The Vite dev server listens on `127.0.0.1` by default. For intentional LAN
-testing, set `VITE_DEV_HOST=0.0.0.0` on a trusted network.
-
----
+On Windows, `scripts/start-dev.ps1` generates the development keys and starts this
+stack. Mailpit and localhost DB/API ports exist only in the explicit development
+configuration. See [SETUP.md](SETUP.md) for frontend development and tests.
 
 ## Deployment
 
-For production deployment, see [DEPLOY.md](DEPLOY.md).
-
-Mailpit (started with the Docker stack) is for local development. In production, use Mailgun, SMTP, or another real mail provider. The linked guide covers a production-focused checklist and deployment flow.
+Use [.env.example](.env.example) for production defaults.
+[.env.reference.example](.env.reference.example) documents advanced backend options;
+variables must also be mapped into the backend's Compose `environment` when not
+already listed there. Never upload a real `.env`.
 
 ### Production checklist
 
@@ -500,7 +465,7 @@ Membership entitlement over Glipz federation (`POST .../federation/posts/{postID
 
 Most operational instance settings are editable at runtime from `/admin/instance-settings` and are stored in PostgreSQL (`site_settings`). Environment variables such as `FEDERATION_POLICY_SUMMARY` are still useful as initial/default configuration, but the admin-saved database value is what operators should manage after deployment.
 
-See [.env.example](.env.example) for every variable, including legacy aliases and mail (`MAILGUN_*`, `SMTP_*`).
+See [.env.reference.example](.env.reference.example) for every backend variable, including legacy aliases and mail (`MAILGUN_*`, `SMTP_*`).
 
 ---
 
@@ -550,7 +515,7 @@ the built-in `/legal/...` pages continue to be used.
 - Open an issue for bugs or feature requests
 - Check SETUP.md for troubleshooting
 - Review DEPLOY.md for production guidance
- 
+
 
 ---
 
