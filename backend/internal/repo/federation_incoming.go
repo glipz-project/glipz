@@ -56,6 +56,8 @@ type FederatedIncomingPost struct {
 }
 
 type InsertFederatedIncomingInput struct {
+	// Event metadata is persisted only after ownership authorization, in the same transaction.
+	EventRemoteAccount     *RemoteAccountUpsert
 	ObjectIRI              string
 	ObjectID               string
 	CreateActivityIRI      string
@@ -87,7 +89,20 @@ type InsertFederatedIncomingInput struct {
 
 // InsertFederatedIncomingPost stores an inbound Create payload.
 // If object_iri already exists, it returns false with no error.
-func (p *Pool) InsertFederatedIncomingPost(ctx context.Context, in InsertFederatedIncomingInput) (inserted bool, err error) {
+func (p *Pool) InsertFederatedIncomingPost(ctx context.Context, in InsertFederatedIncomingInput) (bool, error) {
+	tx, err := p.db.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	inserted, err := insertFederatedIncomingPost(ctx, tx, in)
+	if err != nil {
+		return false, err
+	}
+	return inserted, tx.Commit(ctx)
+}
+
+func insertFederatedIncomingPost(ctx context.Context, tx pgx.Tx, in InsertFederatedIncomingInput) (inserted bool, err error) {
 	if strings.TrimSpace(in.ObjectIRI) == "" || strings.TrimSpace(in.ActorIRI) == "" {
 		return false, fmt.Errorf("missing object or actor iri")
 	}
@@ -104,11 +119,6 @@ func (p *Pool) InsertFederatedIncomingPost(ctx context.Context, in InsertFederat
 	if in.ViewPasswordScope == ViewPasswordScopeAll || in.ViewPasswordScope&ViewPasswordScopeText == 0 {
 		in.ViewPasswordTextRanges = nil
 	}
-	tx, err := p.db.Begin(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
 	var postID uuid.UUID
 	err = tx.QueryRow(ctx, `
 		INSERT INTO federation_incoming_posts (
@@ -139,9 +149,6 @@ func (p *Pool) InsertFederatedIncomingPost(ctx context.Context, in InsertFederat
 		return false, err
 	}
 	if err := syncFederationIncomingPostHashtags(ctx, tx, postID, in.CaptionText); err != nil {
-		return false, err
-	}
-	if err := tx.Commit(ctx); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -182,15 +189,8 @@ func decodeFederatedIncomingViewPasswordProtection(hasPassword bool, storedScope
 }
 
 // SoftDeleteFederatedIncomingByObjectIRI soft-deletes rows matching object_iri after a Delete activity.
-func (p *Pool) SoftDeleteFederatedIncomingByObjectIRI(ctx context.Context, objectIRI string) error {
-	oi := strings.TrimSpace(objectIRI)
-	if oi == "" {
-		return nil
-	}
-	_, err := p.db.Exec(ctx, `
-		UPDATE federation_incoming_posts SET deleted_at = NOW()
-		WHERE deleted_at IS NULL AND object_iri = $1
-	`, oi)
+func (p *Pool) SoftDeleteFederatedIncomingByObjectIRI(ctx context.Context, objectIRI, actorIRI string) error {
+	_, err := p.ApplyFederatedPostEvent(ctx, "post_deleted", InsertFederatedIncomingInput{ObjectIRI: objectIRI, ActorIRI: actorIRI}, nil)
 	return err
 }
 
@@ -518,7 +518,23 @@ func (p *Pool) ListFederatedIncomingRepliesByLocalPostIDSuffix(ctx context.Conte
 }
 
 // UpdateFederatedIncomingFromNote updates caption, media, and related fields for the row matching an inbound Note object ID.
-func (p *Pool) UpdateFederatedIncomingFromNote(ctx context.Context, objectIRI, caption string, mediaType string, mediaURLs []string, isNSFW bool, publishedAt time.Time, likeCount int64, replyToObjectIRI, repostOfObjectIRI, repostComment string, hasViewPassword bool, viewPasswordScope int, viewPasswordTextRanges []ViewPasswordTextRange, unlockURL, membershipProvider, membershipCreatorID, membershipTierID string) error {
+func (p *Pool) UpdateFederatedIncomingFromNote(ctx context.Context, objectIRI, actorIRI, caption string, mediaType string, mediaURLs []string, isNSFW bool, publishedAt time.Time, likeCount int64, replyToObjectIRI, repostOfObjectIRI, repostComment string, hasViewPassword bool, viewPasswordScope int, viewPasswordTextRanges []ViewPasswordTextRange, unlockURL, membershipProvider, membershipCreatorID, membershipTierID string) error {
+	tx, err := p.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	exists, err := lockFederatedPostOwner(ctx, tx, objectIRI, actorIRI)
+	if err != nil || !exists {
+		return err
+	}
+	if err := updateFederatedIncomingFromNote(ctx, tx, objectIRI, caption, mediaType, mediaURLs, isNSFW, publishedAt, likeCount, replyToObjectIRI, repostOfObjectIRI, repostComment, hasViewPassword, viewPasswordScope, viewPasswordTextRanges, unlockURL, membershipProvider, membershipCreatorID, membershipTierID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func updateFederatedIncomingFromNote(ctx context.Context, tx pgx.Tx, objectIRI, caption string, mediaType string, mediaURLs []string, isNSFW bool, publishedAt time.Time, likeCount int64, replyToObjectIRI, repostOfObjectIRI, repostComment string, hasViewPassword bool, viewPasswordScope int, viewPasswordTextRanges []ViewPasswordTextRange, unlockURL, membershipProvider, membershipCreatorID, membershipTierID string) error {
 	oi := strings.TrimSpace(objectIRI)
 	if oi == "" {
 		return fmt.Errorf("empty object iri")
@@ -537,13 +553,8 @@ func (p *Pool) UpdateFederatedIncomingFromNote(ctx context.Context, objectIRI, c
 	if scope == ViewPasswordScopeAll || scope&ViewPasswordScopeText == 0 {
 		ranges = nil
 	}
-	tx, err := p.db.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
 	var postID uuid.UUID
-	err = tx.QueryRow(ctx, `
+	err := tx.QueryRow(ctx, `
 		UPDATE federation_incoming_posts SET
 			caption_text = $2,
 			media_type = $3,
@@ -576,7 +587,7 @@ func (p *Pool) UpdateFederatedIncomingFromNote(ctx context.Context, objectIRI, c
 	if err := syncFederationIncomingPostHashtags(ctx, tx, postID, caption); err != nil {
 		return err
 	}
-	return tx.Commit(ctx)
+	return nil
 }
 
 // UpdateFederatedIncomingActorDisplay refreshes display metadata for all inbound posts whose actor_iri matches.

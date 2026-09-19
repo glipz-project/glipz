@@ -31,11 +31,11 @@ func federationAuthorCurrentAcct(author federationEventAuthor) string {
 func (s *Server) rememberEventAuthorRemoteAccount(ctx context.Context, verified verifiedFederationRequest, author federationEventAuthor) (repo.RemoteAccount, error) {
 	acct := federationAuthorCurrentAcct(author)
 	profileURL := strings.TrimSpace(author.ProfileURL)
-	return s.db.UpsertRemoteAccount(ctx, repo.RemoteAccountUpsert{
+	return s.db.UpsertRemoteAccountForEvent(ctx, repo.RemoteAccountUpsert{
 		PortableID:  federationAuthorPortableID(author),
 		CurrentAcct: acct,
 		ProfileURL:  profileURL,
 		InboxURL:    strings.TrimSpace(verified.Discovery.Server.EventsURL),
 		PublicKey:   strings.TrimSpace(author.PublicKey),
-	})
+	}, acct)
 }

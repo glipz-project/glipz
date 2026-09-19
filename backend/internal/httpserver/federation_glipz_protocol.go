@@ -1484,7 +1484,19 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_author"})
 		return
 	}
-	remoteAccount, remoteAccountErr := s.rememberEventAuthorRemoteAccount(r.Context(), verified, ev.Author)
+	// Owner-only post events defer account metadata until the authorized DB transaction.
+	switch kind {
+	case "post_created", "repost_created", "post_updated", "post_deleted", "poll_tally_updated", "account_moved":
+	default:
+		if _, err := s.rememberEventAuthorRemoteAccount(r.Context(), verified, ev.Author); err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "rememberEventAuthorRemoteAccount", err)
+			}
+			return
+		}
+	}
 	if strings.HasPrefix(kind, "dm_") {
 		if ev.DM == nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_event"})
@@ -1508,11 +1520,15 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_event"})
 			return
 		}
+		if repo.NormalizeFederationTargetAcct(ev.Author.Acct) != repo.NormalizeFederationTargetAcct(ev.Move.OldAcct) || federationAuthorPortableID(ev.Author) != strings.TrimSpace(ev.Move.PortableID) {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			return
+		}
 		if err := validateFederationMoveForInstance(verified, ev.Move); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_move"})
 			return
 		}
-		if _, err := s.db.UpsertRemoteAccount(r.Context(), repo.RemoteAccountUpsert{
+		if _, err := s.db.UpsertRemoteAccountForEvent(r.Context(), repo.RemoteAccountUpsert{
 			PortableID:  ev.Move.PortableID,
 			CurrentAcct: ev.Move.NewAcct,
 			ProfileURL:  ev.Move.ProfileURL,
@@ -1521,8 +1537,16 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 			PublicKey:   ev.Move.PublicKey,
 			MovedFrom:   ev.Move.OldAcct,
 			AlsoKnownAs: ev.Move.AlsoKnownAs,
-		}); err != nil {
-			writeServerError(w, "UpsertRemoteAccount account_moved", err)
+		}, ev.Move.OldAcct); err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "UpsertRemoteAccount account_moved", err)
+			}
+			return
+		}
+		if err := s.db.RepointFederatedIncomingActor(r.Context(), ev.Move.OldAcct, ev.Move.NewAcct); err != nil {
+			writeServerError(w, "RepointFederatedIncomingActor account_moved", err)
 			return
 		}
 		if err := s.db.RepointRemoteFollowRemoteActor(r.Context(), ev.Move.OldAcct, ev.Move.NewAcct); err != nil {
@@ -1597,7 +1621,7 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 		pollSnapshot = federationPollSnapshotFromEvent(ev.Post.Poll)
 	}
 	switch kind {
-	case "post_created", "repost_created":
+	case "post_created", "repost_created", "post_updated":
 		if !hasPost {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_event"})
 			return
@@ -1626,67 +1650,39 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 			ViewPasswordTextRanges: jsonRangesToRepo(ev.Post.ViewPasswordTextRanges),
 			UnlockURL:              ev.Post.UnlockURL,
 		}
-		if remoteAccountErr == nil && remoteAccount.ID != uuid.Nil {
-			in.RemoteAccountID = &remoteAccount.ID
+		in.EventRemoteAccount = &repo.RemoteAccountUpsert{
+			PortableID: federationAuthorPortableID(ev.Author), CurrentAcct: federationAuthorCurrentAcct(ev.Author),
+			ProfileURL: strings.TrimSpace(ev.Author.ProfileURL), InboxURL: strings.TrimSpace(verified.Discovery.Server.EventsURL), PublicKey: strings.TrimSpace(ev.Author.PublicKey),
 		}
 		if ev.Post.HasMembershipLock {
 			in.MembershipProvider = strings.TrimSpace(ev.Post.MembershipProvider)
 			in.MembershipCreatorID = strings.TrimSpace(ev.Post.MembershipCreatorID)
 			in.MembershipTierID = strings.TrimSpace(ev.Post.MembershipTierID)
 		}
-		if err := s.db.UpdateFederationIncomingPost(r.Context(), in); err != nil {
-			writeServerError(w, "UpdateFederationIncomingPost", err)
+		changed, err := s.db.ApplyFederatedPostEvent(r.Context(), kind, in, pollSnapshot)
+		if err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "ApplyFederatedPostEvent", err)
+			}
 			return
 		}
-		if err := s.db.SyncFederatedIncomingPollByObjectIRI(r.Context(), objectID, pollSnapshot); err != nil {
-			writeServerError(w, "SyncFederatedIncomingPollByObjectIRI", err)
-			return
+		if changed {
+			s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
 		}
-		s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
-	case "post_updated":
-		if !hasPost {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_event"})
-			return
-		}
-		if err := s.db.UpdateFederatedIncomingFromNote(
-			r.Context(),
-			objectID,
-			ev.Post.Caption,
-			ev.Post.MediaType,
-			ev.Post.MediaURLs,
-			ev.Post.IsNSFW,
-			pubAt,
-			ev.Post.LikeCount,
-			ev.Post.ReplyToObjectURL,
-			ev.Post.RepostOfObjectURL,
-			ev.Post.RepostComment,
-			ev.Post.HasViewPassword,
-			ev.Post.ViewPasswordScope,
-			jsonRangesToRepo(ev.Post.ViewPasswordTextRanges),
-			ev.Post.UnlockURL,
-			strings.TrimSpace(ev.Post.MembershipProvider),
-			strings.TrimSpace(ev.Post.MembershipCreatorID),
-			strings.TrimSpace(ev.Post.MembershipTierID),
-		); err != nil {
-			writeServerError(w, "UpdateFederatedIncomingFromNote", err)
-			return
-		}
-		if err := s.db.SyncFederatedIncomingPollByObjectIRI(r.Context(), objectID, pollSnapshot); err != nil {
-			writeServerError(w, "SyncFederatedIncomingPollByObjectIRI", err)
-			return
-		}
-		if err := s.db.UpdateFederatedIncomingActorDisplay(r.Context(), ev.Author.Acct, ev.Author.Acct, ev.Author.DisplayName, ev.Author.AvatarURL, ev.Author.ProfileURL); err != nil {
-			writeServerError(w, "UpdateFederatedIncomingActorDisplay", err)
-			return
-		}
-		s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
 	case "post_deleted":
 		row, _ := s.db.GetFederatedIncomingByObjectIRI(r.Context(), objectID)
-		if err := s.db.SoftDeleteFederatedIncomingByObjectIRI(r.Context(), objectID); err != nil {
-			writeServerError(w, "SoftDeleteFederatedIncomingByObjectIRI", err)
+		changed, err := s.db.ApplyFederatedPostEvent(r.Context(), kind, repo.InsertFederatedIncomingInput{ObjectIRI: objectID, ActorIRI: ev.Author.Acct}, nil)
+		if err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "ApplyFederatedPostEvent", err)
+			}
 			return
 		}
-		if row.ID != uuid.Nil {
+		if changed && row.ID != uuid.Nil {
 			s.publishFederatedIncomingDelete(r.Context(), row)
 		}
 	case "note_created", "note_updated", "note_deleted":
@@ -1732,8 +1728,12 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 			}
 			break
 		}
-		if err := s.db.SetFederatedIncomingLikeCountByObjectIRI(r.Context(), objectID, ev.Post.LikeCount); err != nil {
-			writeServerError(w, "SetFederatedIncomingLikeCountByObjectIRI", err)
+		if err := s.db.SetFederatedIncomingLikeCountFromInstance(r.Context(), objectID, verified.InstanceHost, ev.Post.LikeCount); err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "SetFederatedIncomingLikeCountFromInstance", err)
+			}
 			return
 		}
 		s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
@@ -1851,15 +1851,18 @@ func (s *Server) handleFederationEventInbound(w http.ResponseWriter, r *http.Req
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_event"})
 			return
 		}
-		if err := s.db.SetFederatedIncomingLikeCountByObjectIRI(r.Context(), objectID, ev.Post.LikeCount); err != nil {
-			writeServerError(w, "SetFederatedIncomingLikeCountByObjectIRI", err)
+		changed, err := s.db.ApplyFederatedPostEvent(r.Context(), kind, repo.InsertFederatedIncomingInput{ObjectIRI: objectID, ActorIRI: ev.Author.Acct, LikeCount: ev.Post.LikeCount}, pollSnapshot)
+		if err != nil {
+			if errors.Is(err, repo.ErrForbidden) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+			} else {
+				writeServerError(w, "ApplyFederatedPostEvent", err)
+			}
 			return
 		}
-		if err := s.db.SyncFederatedIncomingPollByObjectIRI(r.Context(), objectID, pollSnapshot); err != nil {
-			writeServerError(w, "SyncFederatedIncomingPollByObjectIRI", err)
-			return
+		if changed {
+			s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
 		}
-		s.publishFederatedIncomingUpsertByObjectIRI(r.Context(), objectID)
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_event"})
 		return

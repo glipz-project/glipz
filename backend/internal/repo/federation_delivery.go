@@ -100,17 +100,6 @@ func (p *Pool) AttachRemoteAccountToRemoteFollow(ctx context.Context, localUserI
 	return err
 }
 
-func (p *Pool) UpdateFederationIncomingPost(ctx context.Context, in InsertFederatedIncomingInput) error {
-	inserted, err := p.InsertFederatedIncomingPost(ctx, in)
-	if err != nil {
-		return err
-	}
-	if inserted {
-		return nil
-	}
-	return p.UpdateFederatedIncomingFromNote(ctx, in.ObjectIRI, in.CaptionText, in.MediaType, in.MediaURLs, in.IsNSFW, in.PublishedAt, in.LikeCount, in.ReplyToObjectIRI, in.RepostOfObjectIRI, in.RepostComment, in.HasViewPassword, in.ViewPasswordScope, in.ViewPasswordTextRanges, in.UnlockURL, in.MembershipProvider, in.MembershipCreatorID, in.MembershipTierID)
-}
-
 func MustMarshalJSON(v any) json.RawMessage {
 	b, _ := json.Marshal(v)
 	return b

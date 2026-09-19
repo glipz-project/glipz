@@ -476,35 +476,14 @@ func (p *Pool) AttachReactionsToFederatedIncoming(ctx context.Context, viewerID 
 	return nil
 }
 
-func (p *Pool) SetFederatedIncomingLikeCountByObjectIRI(ctx context.Context, objectIRI string, likeCount int64) error {
+func syncFederatedIncomingPoll(ctx context.Context, tx pgx.Tx, objectIRI string, poll *FederatedIncomingPollSnapshot) error {
 	objectIRI = strings.TrimSpace(objectIRI)
 	if objectIRI == "" {
 		return nil
 	}
-	if likeCount < 0 {
-		likeCount = 0
-	}
-	_, err := p.db.Exec(ctx, `
-		UPDATE federation_incoming_posts
-		SET like_count = $2
-		WHERE deleted_at IS NULL AND object_iri = $1
-	`, objectIRI, likeCount)
-	return err
-}
-
-func (p *Pool) SyncFederatedIncomingPollByObjectIRI(ctx context.Context, objectIRI string, poll *FederatedIncomingPollSnapshot) error {
-	objectIRI = strings.TrimSpace(objectIRI)
-	if objectIRI == "" {
-		return nil
-	}
-	tx, err := p.db.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
 
 	var postID uuid.UUID
-	err = tx.QueryRow(ctx, `
+	err := tx.QueryRow(ctx, `
 		SELECT id FROM federation_incoming_posts
 		WHERE deleted_at IS NULL AND object_iri = $1
 	`, objectIRI).Scan(&postID)
@@ -521,7 +500,7 @@ func (p *Pool) SyncFederatedIncomingPollByObjectIRI(ctx context.Context, objectI
 		if _, err := tx.Exec(ctx, `DELETE FROM federation_incoming_post_poll_options WHERE federation_incoming_post_id = $1`, postID); err != nil {
 			return err
 		}
-		return tx.Commit(ctx)
+		return nil
 	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO federation_incoming_post_polls (federation_incoming_post_id, ends_at)
@@ -541,7 +520,7 @@ func (p *Pool) SyncFederatedIncomingPollByObjectIRI(ctx context.Context, objectI
 			return err
 		}
 	}
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (p *Pool) CastFederatedIncomingPollVote(ctx context.Context, userID, incomingID, optionID uuid.UUID) error {

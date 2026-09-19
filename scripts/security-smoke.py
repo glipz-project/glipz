@@ -7,6 +7,7 @@ import secrets
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 
 BASE = "http://127.0.0.1:8080"
 MAIL = "http://127.0.0.1:8025"
@@ -68,6 +69,37 @@ def register():
     return client, handle, email, password, mail_id
 
 
+def check_oauth_revocation(owner, viewer):
+    anon = Client()
+    redirect = "https://example.test/security-callback"
+    app = owner.call("POST", "/api/v1/me/oauth-clients", {"name": "Security regression", "redirect_uris": [redirect]}, expected=201)
+    credentials = {"client_id": app["client_id"], "client_secret": app["client_secret"]}
+    def token(grant, **extra):
+        form = urllib.parse.urlencode(dict(credentials, grant_type=grant, **extra)).encode()
+        return anon.call("POST", "/api/v1/oauth/token", form, {"Content-Type": "application/x-www-form-urlencoded"})["access_token"]
+    client_token = token("client_credentials")
+    # A different user authorizes the application: do not confuse app ownership
+    # with the subject of an authorization-code access token.
+    authorized = viewer.call("POST", "/api/v1/me/oauth-authorize", {"client_id": app["client_id"], "redirect_uri": redirect, "scope": "posts:read", "state": "security-regression"})
+    code = urllib.parse.parse_qs(urllib.parse.urlparse(authorized["redirect_to"]).query)["code"][0]
+    user_token = token("authorization_code", code=code, redirect_uri=redirect)
+    for raw, path in ((client_token, "/api/v1/me"), (user_token, "/api/v1/posts/bookmarks")):
+        anon.call("GET", path, headers={"Authorization": "Bearer " + raw})
+    pat = viewer.call("POST", "/api/v1/me/personal-access-tokens", {"label": "security-regression"}, expected=201)
+    owner.call("DELETE", "/api/v1/me/oauth-clients/" + app["client_id"])
+    for raw, path in ((client_token, "/api/v1/me"), (user_token, "/api/v1/posts/bookmarks")):
+        anon.call("GET", path, headers={"Authorization": "Bearer " + raw}, expected=401)
+    owner.call("GET", "/api/v1/me")
+    viewer.call("GET", "/api/v1/me")
+    anon.call("GET", "/api/v1/me", headers={"Authorization": "Bearer " + pat["token"]})
+    viewer.call("DELETE", "/api/v1/me/personal-access-tokens/" + pat["token_id"])
+    for scope in ("", "all", "following", "recommended"):
+        viewer.call("GET", "/api/v1/posts/feed?scope=" + scope)
+    for offset in (0, 10):
+        viewer.call("GET", "/api/v1/posts/feed?scope=invalid-security-regression&offset=" + str(offset), expected=400)
+    print("PASS: OAuth client deletion revokes both grants; cross-user authorization, sessions, PATs and feed scope validation")
+
+
 def run():
     accounts = []
     anon = Client()
@@ -76,6 +108,7 @@ def run():
         viewer = register(); accounts.append(viewer)
         a, handle, email, password, _ = owner
         b = viewer[0]
+        check_oauth_revocation(a, b)
         png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=")
         boundary = "audit" + secrets.token_hex(12)
         body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audit.png"\r\nContent-Type: image/png\r\n\r\n'.encode() + png + f"\r\n--{boundary}--\r\n".encode())

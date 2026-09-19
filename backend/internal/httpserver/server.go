@@ -44,6 +44,7 @@ type Server struct {
 	dmThreadsCache    responseCache
 	push              pushQueue
 	sessions          accessSessionStore
+	oauthClients      oauthClientStore
 	mediaAccess       mediaAccessStore
 	pushSubscriptions pushSubscriptionStore
 	pushClient        *http.Client
@@ -363,7 +364,8 @@ func (s *Server) principalForAccess(ctx context.Context, raw string) (uuid.UUID,
 		if e != nil {
 			return uuid.Nil, nil, false
 		}
-		if claims.TokenUse != authjwt.TokenUseOAuth && !s.userSessionActive(ctx, claims, u) {
+		if (claims.TokenUse == authjwt.TokenUseOAuth && !s.oauthClientActive(ctx, claims)) ||
+			(claims.TokenUse != authjwt.TokenUseOAuth && !s.userSessionActive(ctx, claims, u)) {
 			return uuid.Nil, nil, false
 		}
 		return u, claims, true
@@ -2714,7 +2716,11 @@ func (s *Server) handleFeed(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 		return
 	}
-	scope := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("scope")))
+	scope, valid := normalizeFeedScope(r.URL.Query().Get("scope"))
+	if !valid {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_scope"})
+		return
+	}
 	if scope == "recommended" {
 		s.handleRecommendedFeed(w, r, uid)
 		return

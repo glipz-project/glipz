@@ -276,16 +276,16 @@ func parseDeleteObjectIRI(envelope map[string]json.RawMessage) (string, error) {
 	return "", fmt.Errorf("delete object without id")
 }
 
-func (s *Server) apInboxDeleteActivity(ctx context.Context, envelope map[string]json.RawMessage) error {
+func (s *Server) apInboxDeleteActivity(ctx context.Context, envelope map[string]json.RawMessage, signerKeyID string) error {
 	iri, err := parseDeleteObjectIRI(envelope)
 	if err != nil {
 		return err
 	}
 	row, err := s.db.GetFederatedIncomingByObjectIRI(ctx, iri)
 	if err != nil {
-		return s.db.SoftDeleteFederatedIncomingByObjectIRI(ctx, iri)
+		return s.db.SoftDeleteFederatedIncomingByObjectIRI(ctx, iri, actorURLFromKeyID(signerKeyID))
 	}
-	if err := s.db.SoftDeleteFederatedIncomingByObjectIRI(ctx, iri); err != nil {
+	if err := s.db.SoftDeleteFederatedIncomingByObjectIRI(ctx, iri, actorURLFromKeyID(signerKeyID)); err != nil {
 		return err
 	}
 	s.publishFederatedIncomingDelete(ctx, row)
@@ -333,7 +333,7 @@ func (s *Server) handleGlipzProtocolSharedInbox(w http.ResponseWriter, r *http.R
 			return
 		}
 	case "delete":
-		if err := s.apInboxDeleteActivity(r.Context(), envelope); err != nil {
+		if err := s.apInboxDeleteActivity(r.Context(), envelope, keyID); err != nil {
 			log.Printf("glipz protocol shared inbox delete: %v", err)
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
@@ -730,7 +730,7 @@ func (s *Server) apInboxUpdateActivity(ctx context.Context, envelope map[string]
 			pubAt = time.Now().UTC()
 		}
 		mt, urls := noteAttachmentsToMedia(note)
-		if err := s.db.UpdateFederatedIncomingFromNote(ctx, noteID, stripHTMLToCaption(content), mt, urls, sensitive, pubAt, 0, "", "", "", false, 0, nil, "", "", "", ""); err != nil {
+		if err := s.db.UpdateFederatedIncomingFromNote(ctx, noteID, attr, stripHTMLToCaption(content), mt, urls, sensitive, pubAt, 0, "", "", "", false, 0, nil, "", "", "", ""); err != nil {
 			return err
 		}
 		s.publishFederatedIncomingUpsertByObjectIRI(ctx, noteID)

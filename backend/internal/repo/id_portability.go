@@ -220,7 +220,24 @@ func (p *Pool) MarkUserMoved(ctx context.Context, userID uuid.UUID, movedToAcct 
 	return err
 }
 
+type remoteAccountQuerier interface {
+	QueryRow(context.Context, string, ...any) pgx.Row
+}
+
 func (p *Pool) UpsertRemoteAccount(ctx context.Context, in RemoteAccountUpsert) (RemoteAccount, error) {
+	return upsertRemoteAccount(ctx, p.db, in, "")
+}
+
+// A signed event cannot claim a portable identity belonging to another account.
+// Account-move events supply the verified old account as expectedAcct.
+func (p *Pool) UpsertRemoteAccountForEvent(ctx context.Context, in RemoteAccountUpsert, expectedAcct string) (RemoteAccount, error) {
+	if NormalizeFederationTargetAcct(expectedAcct) == "" {
+		return RemoteAccount{}, ErrForbidden
+	}
+	return upsertRemoteAccount(ctx, p.db, in, expectedAcct)
+}
+
+func upsertRemoteAccount(ctx context.Context, db remoteAccountQuerier, in RemoteAccountUpsert, expectedAcct string) (RemoteAccount, error) {
 	in.PortableID = PortableIDForRemote(in.CurrentAcct, in.PortableID)
 	in.CurrentAcct = NormalizeFederationTargetAcct(in.CurrentAcct)
 	if in.PortableID == "" {
@@ -228,7 +245,7 @@ func (p *Pool) UpsertRemoteAccount(ctx context.Context, in RemoteAccountUpsert) 
 	}
 	var row RemoteAccount
 	var last pgtype.Timestamptz
-	err := p.db.QueryRow(ctx, `
+	err := db.QueryRow(ctx, `
 		INSERT INTO federation_remote_accounts (
 			portable_id, current_acct, profile_url, posts_url, inbox_url, public_key,
 			moved_to, moved_from, also_known_as, last_verified_at
@@ -244,12 +261,27 @@ func (p *Pool) UpsertRemoteAccount(ctx context.Context, in RemoteAccountUpsert) 
 			also_known_as = CASE WHEN cardinality(EXCLUDED.also_known_as) > 0 THEN EXCLUDED.also_known_as ELSE federation_remote_accounts.also_known_as END,
 			last_verified_at = NOW(),
 			updated_at = NOW()
+		WHERE $10 = '' OR federation_remote_accounts.current_acct = $10
 		RETURNING id, portable_id, current_acct, profile_url, posts_url, inbox_url, public_key,
 			moved_to, moved_from, also_known_as, last_verified_at
 	`, strings.TrimSpace(in.PortableID), in.CurrentAcct, strings.TrimSpace(in.ProfileURL), strings.TrimSpace(in.PostsURL),
 		strings.TrimSpace(in.InboxURL), strings.TrimSpace(in.PublicKey), NormalizeFederationTargetAcct(in.MovedTo),
-		NormalizeFederationTargetAcct(in.MovedFrom), in.AlsoKnownAs).Scan(&row.ID, &row.PortableID, &row.CurrentAcct, &row.ProfileURL,
+		NormalizeFederationTargetAcct(in.MovedFrom), in.AlsoKnownAs, NormalizeFederationTargetAcct(expectedAcct)).Scan(&row.ID, &row.PortableID, &row.CurrentAcct, &row.ProfileURL,
 		&row.PostsURL, &row.InboxURL, &row.PublicKey, &row.MovedTo, &row.MovedFrom, &row.AlsoKnownAs, &last)
+	if errors.Is(err, pgx.ErrNoRows) {
+		// A repeated move can resume its remaining work, but the former account
+		// must never overwrite metadata after ownership has moved.
+		if expectedAcct != "" && NormalizeFederationTargetAcct(expectedAcct) != in.CurrentAcct {
+			existing, lookupErr := remoteAccountByPortableID(ctx, db, in.PortableID)
+			if lookupErr != nil {
+				return RemoteAccount{}, lookupErr
+			}
+			if existing.CurrentAcct == in.CurrentAcct && existing.MovedFrom == NormalizeFederationTargetAcct(expectedAcct) {
+				return existing, nil
+			}
+		}
+		return RemoteAccount{}, ErrForbidden
+	}
 	if err != nil {
 		return RemoteAccount{}, err
 	}
@@ -261,10 +293,14 @@ func (p *Pool) UpsertRemoteAccount(ctx context.Context, in RemoteAccountUpsert) 
 }
 
 func (p *Pool) RemoteAccountByPortableID(ctx context.Context, portableID string) (RemoteAccount, error) {
+	return remoteAccountByPortableID(ctx, p.db, portableID)
+}
+
+func remoteAccountByPortableID(ctx context.Context, db remoteAccountQuerier, portableID string) (RemoteAccount, error) {
 	portableID = NormalizePortableID(portableID)
 	var row RemoteAccount
 	var last pgtype.Timestamptz
-	err := p.db.QueryRow(ctx, `
+	err := db.QueryRow(ctx, `
 		SELECT id, portable_id, current_acct, profile_url, posts_url, inbox_url, public_key,
 			moved_to, moved_from, also_known_as, last_verified_at
 		FROM federation_remote_accounts WHERE portable_id = $1
