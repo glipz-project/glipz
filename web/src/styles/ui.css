@@ -173,10 +173,6 @@ main :where(input,select,textarea) { max-width:100%; }
 .ui-admin-list article > details { min-width:0; }
 .ui-admin-list summary { min-height:44px; cursor:pointer; font-size:14px; color:rgb(var(--theme-text-muted)); }
 .ui-admin-list details[open] { padding-top:8px; }
-.about-page > div { gap:48px; }
-.about-page h1 { font-size:clamp(30px,4vw,48px); letter-spacing:-.04em; }
-.about-hero { border-bottom:1px solid rgb(var(--color-frame)); padding-block:32px 48px; }
-.about-features article { border-top:1px solid rgb(var(--color-frame)); padding:24px 0; }
 @media (min-width:768px) {
   .ui-shell { padding-block:0; }
   .ui-shell--contained { padding-block:0; }
@@ -222,8 +218,6 @@ main :where(input,select,textarea) { max-width:100%; }
   .ui-admin main > div { padding:24px 16px; }
   .ui-admin-list article { padding:16px; }
   .ui-dialog { width:calc(100% - 24px); max-height:calc(100dvh - 24px); }
-  .about-page > div { gap:32px; }
-  .about-hero { padding-block:0 32px; }
 }
 
 .ui-app-shell:has(.ui-messages) { height:var(--app-viewport-height,100dvh); max-height:var(--app-viewport-height,100dvh); }

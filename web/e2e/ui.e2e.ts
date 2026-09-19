@@ -18,6 +18,28 @@ async function login(page: Page) {
 async function noHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 }
+test('landing translations, themes and entry links work at narrow widths', async ({page}) => {
+  await page.setViewportSize({width:320,height:844});
+  await page.goto('/about');
+  for (const locale of ['ja','en','zh','ko','ru','es','pt']) {
+    await page.locator('#about-locale-select').selectOption(locale);
+    await expect(page.locator('h1')).not.toContainText('landing.');
+    await noHorizontalOverflow(page);
+  }
+  await page.locator('#about-locale-select').selectOption('ja');
+  await page.locator('.landing-hero a[href="#public-timeline"]').click();
+  expect(Math.abs(await page.locator('#public-timeline').evaluate(el => el.getBoundingClientRect().top))).toBeLessThan(2);
+  await page.locator('.landing-cta a').click();
+  await expect(page).toHaveURL(/\/register$/);
+  await page.goto('/about');
+  await page.locator('.landing-login').click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.addInitScript(() => localStorage.setItem('glipz-theme-mode', 'dark'));
+  await page.goto('/about');
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(page.locator('.landing-brand img')).toHaveAttribute('src', /glipz-dark/);
+  await noHorizontalOverflow(page);
+});
 for (const width of [320,390,768,1024,1440]) {
   test(`public pages reflow at ${width}px`, async ({page}) => {
     await page.setViewportSize({width,height:844});
