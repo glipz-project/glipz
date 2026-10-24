@@ -49,7 +49,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -f backend/Dockerfile -t glipz-security-check .
       - uses: aquasecurity/trivy-action@0.35.0
+        env:
+          # Bypass the pull-through mirror: stale layers can return a fatal 404.
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
         with:
+          version: v0.76.1
           image-ref: glipz-security-check
           severity: HIGH,CRITICAL
           ignore-unfixed: true
