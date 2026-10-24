@@ -13,6 +13,14 @@ import (
 const identityTransferHTTPTimeout = 20 * time.Second
 
 func normalizeTransferOrigin(raw string) (string, bool, error) {
+	return normalizeTransferOriginWithLoopback(raw, false)
+}
+
+func (s *Server) normalizeTransferOrigin(raw string) (string, bool, error) {
+	return normalizeTransferOriginWithLoopback(raw, s.cfg.IdentityTransferAllowLoopback)
+}
+
+func normalizeTransferOriginWithLoopback(raw string, allowLoopback bool) (string, bool, error) {
 	u, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil {
 		return "", false, err
@@ -25,6 +33,9 @@ func normalizeTransferOrigin(raw string) (string, bool, error) {
 	}
 	host := u.Hostname()
 	isLocal := isLoopbackHost(host)
+	if isLocal && !allowLoopback {
+		return "", false, fmt.Errorf("loopback origin is disabled")
+	}
 	switch strings.ToLower(u.Scheme) {
 	case "https":
 	case "http":
@@ -62,22 +73,38 @@ func transferURL(origin, path string) (string, error) {
 	return base.String(), nil
 }
 
-func newIdentityTransferHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: identityTransferHTTPTimeout,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+func (s *Server) newIdentityTransferHTTPClient() *http.Client {
+	c := newPublicOutboundHTTPClient(identityTransferHTTPTimeout)
+	if s.cfg.IdentityTransferAllowLoopback {
+		c.Transport.(*http.Transport).DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+			host, port, err := net.SplitHostPort(address)
+			if err != nil {
+				return nil, err
+			}
+			if isLoopbackHost(host) {
+				// Pin localhost to a literal loopback address rather than resolving DNS.
+				if strings.EqualFold(host, "localhost") {
+					host = "127.0.0.1"
+				}
+				return (&net.Dialer{}).DialContext(ctx, network, net.JoinHostPort(host, port))
+			}
+			return publicOutboundDialContext(ctx, network, address)
+		}
 	}
+	c.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return c
 }
 
-func validateTransferRequestURL(raw string) error {
+func (s *Server) validateTransferRequestURL(raw string) error {
 	u, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil {
 		return err
 	}
+	if u.User != nil || u.Fragment != "" {
+		return fmt.Errorf("invalid transfer URL")
+	}
 	origin := &url.URL{Scheme: u.Scheme, Host: u.Host}
-	_, _, err = normalizeTransferOrigin(origin.String())
+	_, _, err = s.normalizeTransferOrigin(origin.String())
 	return err
 }
 
@@ -112,10 +139,5 @@ func isUnsafeRemoteIP(ip net.IP) bool {
 	if ip == nil {
 		return true
 	}
-	return ip.IsLoopback() ||
-		ip.IsPrivate() ||
-		ip.IsLinkLocalUnicast() ||
-		ip.IsLinkLocalMulticast() ||
-		ip.IsUnspecified() ||
-		ip.IsMulticast()
+	return !isPublicOutboundIP(ip)
 }

@@ -16,7 +16,7 @@ Install these before starting:
 | **Docker & Docker Compose** | Yes | Runs PostgreSQL, Redis, Mailpit, Backend |
 | **Node.js 22+** | Yes (frontend) | Matches `web/package.json` `engines`; Docker image uses Node 22 |
 | **npm** | Yes (frontend) | Comes with Node.js |
-| **Go 1.26.8+** | No | Only if running backend outside Docker |
+| **Go 1.26.10+** | No | Only if running backend outside Docker |
 | **Media storage** | Yes | Server-local folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, AWS S3, etc.) |
 
 ---

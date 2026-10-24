@@ -57,6 +57,23 @@ func TestLoadSMTPSettings(t *testing.T) {
 	}
 }
 
+func TestIdentityTransferLoopbackRequiresExplicitOptIn(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://glipz:glipz_dev@127.0.0.1:5432/glipz?sslmode=disable")
+	t.Setenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+	t.Setenv("JWT_SECRET", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ__")
+	t.Setenv("GLIPZ_STORAGE_MODE", "local")
+	for _, value := range []string{"", "false", "invalid", "true"} {
+		t.Setenv("GLIPZ_IDENTITY_TRANSFER_ALLOW_LOOPBACK", value)
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.IdentityTransferAllowLoopback != (value == "true") {
+			t.Fatalf("loopback opt-in for %q = %v", value, cfg.IdentityTransferAllowLoopback)
+		}
+	}
+}
+
 func TestLoadFederationKeyAndTrustedProxyCIDRs(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://glipz:glipz_dev@127.0.0.1:5432/glipz?sslmode=disable")
 	t.Setenv("REDIS_URL", "redis://127.0.0.1:6379/0")

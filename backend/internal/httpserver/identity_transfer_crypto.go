@@ -112,9 +112,15 @@ func decryptIdentityPrivateKey(passphrase string, enc encryptedIdentitySecret) (
 	if err != nil {
 		return "", err
 	}
+	if len(salt) != identityBundleSaltBytes {
+		return "", fmt.Errorf("invalid salt length")
+	}
 	nonce, err := base64.RawURLEncoding.DecodeString(strings.TrimSpace(enc.Nonce))
 	if err != nil {
 		return "", err
+	}
+	if len(nonce) != identityBundleNonceBytes {
+		return "", fmt.Errorf("invalid nonce length")
 	}
 	ct, err := base64.RawURLEncoding.DecodeString(strings.TrimSpace(enc.Ciphertext))
 	if err != nil {

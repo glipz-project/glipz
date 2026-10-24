@@ -152,13 +152,13 @@ ranking weights for custom timelines.
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | Go 1.26.8, Chi router, pgx, Redis |
+| **Backend** | Go 1.26.10, Chi router, pgx, Redis |
 | **Frontend** | Vue 3, TypeScript, Vite, Tailwind CSS, vue-i18n (ja / en / zh / ko / ru / es / pt) |
 | **Database** | PostgreSQL 16 |
 | **Cache** | Redis 7 |
 | **Storage** | Local server folder or S3-compatible storage (Cloudflare R2, Wasabi, MinIO, etc.) |
 | **Mobile (optional)** | Capacitor 7 (Android / iOS) |
-| **Deployment** | Docker, Docker Compose (image builds Node 22 + Go 1.26.8) |
+| **Deployment** | Docker, Docker Compose (image builds Node 22 + Go 1.26.10) |
 
 ---
 

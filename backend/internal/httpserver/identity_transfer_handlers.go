@@ -110,7 +110,7 @@ func (s *Server) handleMeIdentityExportSecure(w http.ResponseWriter, r *http.Req
 	}
 	targetOrigin := ""
 	if strings.TrimSpace(req.TargetOrigin) != "" {
-		origin, _, err := normalizeTransferOrigin(req.TargetOrigin)
+		origin, _, err := s.normalizeTransferOrigin(req.TargetOrigin)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_target_origin"})
 			return
@@ -193,7 +193,7 @@ func (s *Server) handleMeIdentityTransferSessionCreate(w http.ResponseWriter, r 
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_json"})
 		return
 	}
-	targetOrigin, _, err := normalizeTransferOrigin(req.TargetOrigin)
+	targetOrigin, _, err := s.normalizeTransferOrigin(req.TargetOrigin)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_target_origin"})
 		return
@@ -298,7 +298,7 @@ func (s *Server) authenticatedTransferSession(r *http.Request) (repo.IdentityTra
 			token = strings.TrimSpace(h[len("Bearer "):])
 		}
 	}
-	targetOrigin, _, err := normalizeTransferOrigin(r.Header.Get("X-Glipz-Target-Origin"))
+	targetOrigin, _, err := s.normalizeTransferOrigin(r.Header.Get("X-Glipz-Target-Origin"))
 	if err != nil || !strings.EqualFold(targetOrigin, session.AllowedTargetOrigin) {
 		_ = s.db.RecordIdentityTransferTokenFailure(r.Context(), session.ID, hmacIP(s.secret, directClientIP(r)))
 		return repo.IdentityTransferSession{}, false
@@ -481,12 +481,12 @@ func (s *Server) handleMeIdentityImportJobCreate(w http.ResponseWriter, r *http.
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_json"})
 		return
 	}
-	sourceOrigin, _, err := normalizeTransferOrigin(req.SourceOrigin)
+	sourceOrigin, _, err := s.normalizeTransferOrigin(req.SourceOrigin)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_source_origin"})
 		return
 	}
-	targetOrigin, _, err := normalizeTransferOrigin(s.identityTransferTargetOrigin(req.TargetOrigin))
+	targetOrigin, _, err := s.normalizeTransferOrigin(s.identityTransferTargetOrigin(req.TargetOrigin))
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_target_origin"})
 		return
@@ -828,7 +828,7 @@ func (s *Server) copyTransferMedia(ctx context.Context, job repo.IdentityTransfe
 	q := u.Query()
 	q.Set("object_key", objectKey)
 	u.RawQuery = q.Encode()
-	if err := validateTransferRequestURL(u.String()); err != nil {
+	if err := s.validateTransferRequestURL(u.String()); err != nil {
 		return "", err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -837,7 +837,7 @@ func (s *Server) copyTransferMedia(ctx context.Context, job repo.IdentityTransfe
 	}
 	req.Header.Set("X-Glipz-Transfer-Token", token)
 	req.Header.Set("X-Glipz-Target-Origin", s.identityTransferTargetOrigin(job.TargetOrigin))
-	res, err := newIdentityTransferHTTPClient().Do(req)
+	res, err := s.newIdentityTransferHTTPClient().Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -921,7 +921,7 @@ func (s *Server) fetchTransferJSON(ctx context.Context, job repo.IdentityTransfe
 	if err != nil {
 		return err
 	}
-	if err := validateTransferRequestURL(u.String()); err != nil {
+	if err := s.validateTransferRequestURL(u.String()); err != nil {
 		return err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -931,7 +931,7 @@ func (s *Server) fetchTransferJSON(ctx context.Context, job repo.IdentityTransfe
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Glipz-Transfer-Token", token)
 	req.Header.Set("X-Glipz-Target-Origin", s.identityTransferTargetOrigin(job.TargetOrigin))
-	res, err := newIdentityTransferHTTPClient().Do(req)
+	res, err := s.newIdentityTransferHTTPClient().Do(req)
 	if err != nil {
 		return err
 	}

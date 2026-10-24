@@ -30,6 +30,8 @@ type Config struct {
 	FrontendOrigin string
 	// Full frontend origin list for CORS. The first entry matches FrontendOrigin.
 	FrontendOrigins []string
+	// Development only: permit identity transfers to literal loopback IPs or localhost.
+	IdentityTransferAllowLoopback bool
 	// Public base URL used by Glipz federation clients, for example https://api.example.com.
 	// When empty, discovery and federation endpoints are not mounted.
 	GlipzProtocolPublicOrigin string
@@ -147,6 +149,7 @@ func Load() (Config, error) {
 		c.S3UsePathStyle, _ = strconv.ParseBool(v)
 	}
 	c.StaticWebRoot = strings.TrimSpace(os.Getenv("STATIC_WEB_ROOT"))
+	c.IdentityTransferAllowLoopback = strings.EqualFold(strings.TrimSpace(os.Getenv("GLIPZ_IDENTITY_TRANSFER_ALLOW_LOOPBACK")), "true")
 	c.LegalDocsDir = strings.TrimSpace(os.Getenv("LEGAL_DOCS_DIR"))
 	fe := strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN"))
 	if fe == "" {
