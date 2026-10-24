@@ -6,6 +6,46 @@ Glipz uses `web/package.json` as the source of truth for the application
 version. Federation protocol compatibility is versioned separately with
 `glipz-federation/{major}` and `event_schema_version`.
 
+## [0.0.5] - 2026-10-24
+
+### Changed
+
+- Refreshed responsive application layouts, profile tabs, and the localized
+  landing page describing decentralized social networking and federation.
+- Production self-hosting now defaults to HTTPS through Caddy, isolated database
+  and cache services, dedicated credentials, setup checks, and backup/recovery
+  tooling. Local Docker development uses a separate Compose configuration.
+- Updated Go to 1.26.10 and refreshed vulnerable frontend and backend dependencies.
+- Updated CI actions to Node.js 24, fixed Trivy database downloads, and pinned
+  the CI runner to Ubuntu 24.04.
+- Synchronized package metadata and frontend/backend application versions to
+  0.0.5. Federation compatibility remains glipz-federation/3, with v2 support and
+  event schema version 3.
+
+### Security
+
+- Enforced stored ownership when applying federated post updates, deletions,
+  poll results, and related account metadata.
+- Revoked OAuth access when its client is deleted and bounded response caches
+  to prevent unbounded cache entries and locks.
+- Protected identity-transfer HTTP connections against private/reserved IPs and
+  DNS rebinding. Loopback transfers now require the explicit development-only
+  GLIPZ_IDENTITY_TRANSFER_ALLOW_LOOPBACK option.
+- Rejected malformed identity-bundle salt and nonce lengths before key derivation
+  and AES-GCM decryption.
+- Added regression coverage and documented security audit results in
+  SECURITY_REAUDIT_2026-09-19.ja.md and SECURITY_REAUDIT_2026-10-24.ja.md.
+
+### Upgrade Notes
+
+- Back up the database, media, and configuration before upgrading. Follow
+  DEPLOY.md when adapting an existing installation to the production Compose
+  defaults; retain the installation's existing credentials and volumes.
+- Existing installations should allow backend startup migrations to complete.
+  This release does not introduce a separate manual SQL migration step.
+- Native backend builds require Go 1.26.10 or newer. Loopback identity transfers
+  are disabled by default; enable them only in a local development environment.
+
 ## [0.0.4] - 2026-05-25
 
 ### Added
